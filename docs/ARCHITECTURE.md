@@ -21,6 +21,14 @@ Current Pi constraints that shape the design:
 - Custom models can be configured, including Ollama and other OpenAI-compatible providers.
 - Pi sessions are persistent and can be addressed by session manager/RPC.
 
+## Product Entrypoint
+
+The public command is `aihaus`.
+
+`aihaus` is not a fork of Pi. It is a thin npm binary that launches `pi -e <aihaus-pi package root>` and forwards all user arguments. This keeps the product brand and onboarding stable while preserving Pi as the runtime, package loader, TUI, session manager, model selector, and extension host.
+
+Forking Pi is reserved for a future case where aihaus-pi needs to change Pi core behavior, rebrand the whole TUI/runtime, or expose startup semantics that cannot be expressed through Pi packages, extensions, settings, skills, prompts, or CLI wrapping.
+
 ## Modules
 
 ### Extension

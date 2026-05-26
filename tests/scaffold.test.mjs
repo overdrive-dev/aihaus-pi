@@ -91,3 +91,18 @@ test("context plan uses Pi-native skills, sessions, and custom context injection
   assert.equal(plan.injection, "aihaus-pi.context-pack");
   assert.ok(plan.rawSessionPolicy.includes("curated summaries"));
 });
+
+test("package exposes aihaus launcher without forking Pi", () => {
+  const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+  assert.equal(packageJson.bin.aihaus, "bin/aihaus.js");
+  assert.ok(packageJson.files.includes("bin"));
+  assert.ok(packageJson.files.includes("src"));
+
+  const launcher = readFileSync(new URL("../bin/aihaus.js", import.meta.url), "utf8");
+  assert.match(launcher, /spawnSync\(piCommand, \["-e", packageRoot/);
+  assert.doesNotMatch(launcher.toLowerCase(), /fork/);
+
+  const architecture = readFileSync(new URL("../docs/ARCHITECTURE.md", import.meta.url), "utf8");
+  assert.match(architecture, /The public command is `aihaus`/);
+  assert.match(architecture, /not a fork of Pi/);
+});

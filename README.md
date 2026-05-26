@@ -28,15 +28,26 @@ Core rules:
 
 ## Install
 
-Install Pi first, then install this package from GitHub once it is published:
+Install Pi first, then install this package from GitHub:
+
+```bash
+npm install -g --ignore-scripts @earendil-works/pi-coding-agent
+npm install -g git+https://github.com/overdrive-dev/aihaus-pi.git
+```
+
+Start aihaus from the repository you want it to work on:
+
+```bash
+cd /path/to/project
+aihaus
+```
+
+The `aihaus` command is a thin launcher over Pi. It runs Pi with this aihaus-pi package loaded, so customers use the product command while the runtime remains Pi-native.
+
+For direct Pi package installation without the `aihaus` launcher:
 
 ```bash
 pi install git:github.com/overdrive-dev/aihaus-pi@main
-```
-
-Project-local install:
-
-```bash
 pi install git:github.com/overdrive-dev/aihaus-pi@main -l
 ```
 
