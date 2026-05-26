@@ -3,7 +3,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { runAihausUpdate } from "../src/runtime/update.js";
+import { defaultGitCommand, runAihausUpdate } from "../src/runtime/update.js";
 
 function tempProject() {
   return mkdtempSync(join(tmpdir(), "aihaus-pi-update-"));
@@ -18,10 +18,23 @@ function createLinkedGlobalPackage(root) {
   return { checkout, globalRoot };
 }
 
+test("defaultGitCommand uses git instead of git.cmd on Windows shells", () => {
+  const previous = process.env.AIHAUS_GIT_COMMAND;
+  try {
+    delete process.env.AIHAUS_GIT_COMMAND;
+    assert.equal(defaultGitCommand(), "git");
+    process.env.AIHAUS_GIT_COMMAND = "custom-git";
+    assert.equal(defaultGitCommand(), "custom-git");
+  } finally {
+    if (previous === undefined) delete process.env.AIHAUS_GIT_COMMAND;
+    else process.env.AIHAUS_GIT_COMMAND = previous;
+  }
+});
+
 function fakeSpawnFactory({ globalRoot, dirty = false } = {}) {
   const calls = [];
   const spawn = (command, args, options) => {
-    calls.push({ command, args, cwd: options.cwd });
+    calls.push({ command, args, cwd: options.cwd, stdio: options.stdio });
     if (command === "npm" && args.join(" ") === "root -g") {
       return { status: 0, stdout: `${globalRoot}\n`, stderr: "" };
     }
@@ -82,11 +95,13 @@ test("runAihausUpdate preserves dirty linked checkout without failing the Pi upd
       packageJson: { name: "aihaus-pi", repository: { url: "git+https://github.com/overdrive-dev/aihaus-pi.git" } },
       npmCommand: "npm",
       gitCommand: "git",
+      stdio: "inherit",
       spawn,
     });
 
     assert.equal(result.ok, true);
     assert.ok(result.notes.some((note) => /has uncommitted changes/.test(note)));
+    assert.ok(calls.some((call) => call.command === "git" && call.args.join(" ") === "status --porcelain" && call.stdio === "pipe"));
     assert.ok(!calls.some((call) => call.command === "git" && call.args.join(" ") === "pull --ff-only"));
     assert.ok(!calls.some((call) => call.command === "npm" && call.args.join(" ") === "install --no-package-lock"));
   } finally {

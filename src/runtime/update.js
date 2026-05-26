@@ -17,7 +17,10 @@ export function defaultNpmCommand() {
 }
 
 export function defaultGitCommand() {
-  return process.env.AIHAUS_GIT_COMMAND ?? platformCommand("git");
+  // Git for Windows is normally exposed as git.exe, not git.cmd. Keep
+  // the literal command name so PATH resolution works across shells while
+  // still allowing tests/operators to override it.
+  return process.env.AIHAUS_GIT_COMMAND ?? "git";
 }
 
 export function splitShellArgs(input = "") {
@@ -105,7 +108,7 @@ export function aihausUpdateHelp() {
     "",
     "Shows aihaus-pi package status, updates the underlying Pi runtime when selected, and refreshes aihaus-pi when the install mode supports it.",
     "The aihaus launcher updates Pi by default. The /aih-update slash command skips the global Pi runtime update unless --with-pi is passed.",
-    "Linked local checkouts are preserved and reported instead of being overwritten.",
+    "Linked local checkouts are fast-forwarded with git when clean and preserved when dirty.",
     "",
     "Options:",
     "  status         show aihaus-pi/Pi update status only; run no update commands",
@@ -202,7 +205,7 @@ function findGlobalPackage({ packageName, packageRoot, npmCommand, cwd, spawn = 
     return {
       canUpdate: false,
       linked: true,
-      note: `${packageName} is linked to a local checkout at ${realpathSync(installedPath)}. Pull that checkout instead of replacing the link.`,
+      note: `${packageName} is linked to a local checkout at ${realpathSync(installedPath)}. It can be fast-forwarded with git when the checkout is clean.`,
       diagnostics: rootStep,
       globalRoot,
       installedPath,
@@ -278,7 +281,7 @@ export function runAihausUpdate({
   log,
   warn,
   defaultIncludePi = true,
-  gitCommand = process.platform === "win32" ? "git.cmd" : "git",
+  gitCommand = defaultGitCommand(),
   spawn = spawnSync,
 } = {}) {
   if (!packageRoot) throw new Error("runAihausUpdate requires packageRoot");
@@ -330,7 +333,9 @@ export function runAihausUpdate({
         command: gitCommand,
         args: ["status", "--porcelain"],
         cwd: packageRoot,
-        stdio,
+        // Always capture stdout for the dirty check, even when the user-facing
+        // update flow streams other commands to the terminal.
+        stdio: "pipe",
         log,
         spawn,
       });
@@ -339,17 +344,19 @@ export function runAihausUpdate({
       } else if (String(dirty.stdout ?? "").trim()) {
         notes.push(`Skipped aihaus-pi linked checkout fast-forward because ${packageRoot} has uncommitted changes.`);
       } else {
-        steps.push(
-          runStep({
-            name: "aihaus-pi linked checkout fetch",
-            command: gitCommand,
-            args: ["fetch", "--tags", "--prune"],
-            cwd: packageRoot,
-            stdio,
-            log,
-            spawn,
-          }),
-          runStep({
+        const fetch = runStep({
+          name: "aihaus-pi linked checkout fetch",
+          command: gitCommand,
+          args: ["fetch", "--tags", "--prune"],
+          cwd: packageRoot,
+          stdio,
+          log,
+          spawn,
+        });
+        steps.push(fetch);
+
+        if (fetch.status === 0 && !fetch.error) {
+          const fastForward = runStep({
             name: "aihaus-pi linked checkout fast-forward",
             command: gitCommand,
             args: ["pull", "--ff-only"],
@@ -357,17 +364,23 @@ export function runAihausUpdate({
             stdio,
             log,
             spawn,
-          }),
-          runStep({
-            name: "aihaus-pi linked checkout dependency refresh",
-            command: npmCommand,
-            args: ["install", "--no-package-lock"],
-            cwd: packageRoot,
-            stdio,
-            log,
-            spawn,
-          }),
-        );
+          });
+          steps.push(fastForward);
+
+          if (fastForward.status === 0 && !fastForward.error) {
+            steps.push(
+              runStep({
+                name: "aihaus-pi linked checkout dependency refresh",
+                command: npmCommand,
+                args: ["install", "--no-package-lock"],
+                cwd: packageRoot,
+                stdio,
+                log,
+                spawn,
+              }),
+            );
+          }
+        }
       }
     } else if (aihausStatus.updateStrategy === "pi-package-update") {
       steps.push(

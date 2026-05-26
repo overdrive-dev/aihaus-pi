@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.2 - 2026-05-26
+
+### Fixed
+
+- `aihaus update` now uses `git` instead of `git.cmd` for linked checkout updates so Git for Windows resolves correctly from shell-based update runs.
+- Linked checkout dirty checks now always capture `git status --porcelain`, preventing dirty worktrees from accidentally continuing into fetch/pull/dependency refresh.
+- Linked checkout update steps now stop after a failed fetch or fast-forward instead of continuing to later steps.
+
+### Verification
+
+- `npm run smoke` passes with 34/34 tests.
+- `aihaus update` no longer fails on the linked checkout dirty check and reports dirty worktrees as a skip.
+
 ## 0.2.1 - 2026-05-26
 
 ### Fixed

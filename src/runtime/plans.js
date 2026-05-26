@@ -461,7 +461,7 @@ export async function buildUpdatePlan({ cwd, args = "" } = {}) {
           "Pi runtime update is not selected by default from the target repository; pass `--with-pi` to run `pi update`",
           "normal global npm installs refresh with `npm install -g <source>`",
           "Pi-managed package installs refresh with `pi update --extensions`",
-          "preserved linked local checkouts instead of overwriting them",
+          "fast-forwarded linked local checkouts through git when clean, or preserved them when dirty",
           "preserved rules, kanban, memory, docs, and evidence",
         ],
       },
