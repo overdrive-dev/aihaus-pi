@@ -40,5 +40,8 @@ if (!launcher.includes('"-e"')) throw new Error("aihaus launcher must load this 
 if (!launcher.includes("shell: process.platform === \"win32\"")) {
   throw new Error("aihaus launcher must use shell mode on Windows for npm .cmd shims");
 }
+if (!launcher.includes("defaultProvider") || !launcher.includes("defaultModel")) {
+  throw new Error("aihaus launcher must forward Pi defaultProvider/defaultModel when present");
+}
 
 console.log("aihaus-pi scaffold check passed");

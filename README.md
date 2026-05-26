@@ -44,6 +44,8 @@ aihaus
 
 The `aihaus` command is a thin launcher over Pi. It runs Pi with this aihaus-pi package loaded, so customers use the product command while the runtime remains Pi-native.
 
+`aihaus` also reads Pi's `defaultProvider` and `defaultModel` from `~/.pi/agent/settings.json` and passes them explicitly to Pi when you do not provide `--provider` or `--model`. That keeps the launcher aligned with the provider you configured through `/login`.
+
 For direct Pi package installation without the `aihaus` launcher:
 
 ```bash
