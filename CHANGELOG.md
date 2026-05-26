@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.2.1 - 2026-05-26
+
+### Fixed
+
+- `/aih-update` in a target repository now reports aihaus-pi package status first and skips global Pi runtime updates by default.
+- Pi runtime updates from `/aih-update` are opt-in via `--with-pi`, preventing failures caused by unrelated global Pi version/update checks.
+- aihaus-pi install mode detection now distinguishes normal global npm installs, Pi-managed packages, linked global checkouts, and non-global package roots.
+- Pi-managed aihaus-pi packages refresh with `pi update --extensions`; global npm installs refresh with `npm install -g`; clean linked checkouts can fast-forward with git; dirty linked checkouts are preserved.
+
+### Verification
+
+- `npm run smoke` passes with 33/33 tests.
+- `npm pack --dry-run --json` verifies aihaus-pi `0.2.1` release files.
+
 ## 0.2.0 - 2026-05-26
 
 ### Added

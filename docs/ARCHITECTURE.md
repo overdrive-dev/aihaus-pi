@@ -25,7 +25,7 @@ Current Pi constraints that shape the design:
 
 The public command is `aihaus`.
 
-`aihaus` is not a fork of Pi. It is a thin npm binary that launches `pi -e <aihaus-pi package root>` and forwards normal user arguments. The maintenance subcommand `aihaus update` is intercepted before launch so it can run `pi update` against the underlying runtime and then refresh the global aihaus-pi package when safe. This keeps the product brand and onboarding stable while preserving Pi as the runtime, package loader, TUI, session manager, model selector, and extension host.
+`aihaus` is not a fork of Pi. It is a thin npm binary that launches `pi -e <aihaus-pi package root>` and forwards normal user arguments. The maintenance subcommand `aihaus update` is intercepted before launch so it can run `pi update` against the underlying runtime and then refresh aihaus-pi when safe. Normal global installs are refreshed through npm; linked local checkouts are fast-forwarded through git when clean and preserved when dirty. This keeps the product brand and onboarding stable while preserving Pi as the runtime, package loader, TUI, session manager, model selector, and extension host.
 
 Forking Pi is reserved for a future case where aihaus-pi needs to change Pi core behavior, rebrand the whole TUI/runtime, or expose startup semantics that cannot be expressed through Pi packages, extensions, settings, skills, prompts, or CLI wrapping.
 
@@ -180,7 +180,7 @@ The context pack must identify every item as one of:
 Maintenance commands are separate:
 
 - `/aih-doctor`: read-only diagnosis
-- `/aih-update`: version update only; includes underlying Pi runtime update and aihaus-pi package refresh, but no state repair
+- `/aih-update`: version update only; reports aihaus-pi status first, refreshes aihaus-pi package resources by default, and runs the underlying Pi runtime update only when `--with-pi` is explicit; no state repair
 - `/aih-repair`: state repair without version update
 - `/aih-cleanup`: safe cleanup
 - `/aih-mcp`: MCP provider list, doctor, preset add, install, enable, and disable

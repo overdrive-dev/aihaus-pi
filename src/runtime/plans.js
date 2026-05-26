@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import { WORKFLOW_STAGES } from "../workflow/stages.js";
 import { DEFAULT_COHORTS } from "../models/cohorts.js";
 import { GATEWAYS } from "../router/gateways.js";
-import { runAihausUpdate, splitShellArgs, updateResultItems } from "./update.js";
+import { aihausStatusItems, runAihausUpdate, splitShellArgs, updateResultItems } from "./update.js";
 import { ensureProjectBaseline, projectPath, readJsonFile } from "../state/project.js";
 import { collectTaskBlockers, readKanban, tasksByStage } from "../state/kanban.js";
 import { addMcpPreset, commandForPlatform, listMcpServers, readMcpConfig, setMcpServerEnabled } from "../mcp/config.js";
@@ -441,7 +441,7 @@ export async function buildUpdatePlan({ cwd, args = "" } = {}) {
     };
   }
 
-  const result = runAihausUpdate({ cwd, argv, packageRoot, packageJson });
+  const result = runAihausUpdate({ cwd, argv, packageRoot, packageJson, defaultIncludePi: false });
 
   return {
     title: result.ok ? "aih-update report" : "aih-update failed",
@@ -451,10 +451,16 @@ export async function buildUpdatePlan({ cwd, args = "" } = {}) {
       : "Update flow completed with blockers. This command does not repair corrupted local state; use /aih-repair for repair work.",
     sections: [
       {
+        title: "aihaus-pi status",
+        items: aihausStatusItems(result.aihausStatus),
+      },
+      {
         title: "Update scope",
         items: [
-          "updated the underlying Pi runtime with `pi update` unless skipped by command flags",
-          "refreshed the global aihaus-pi npm package when it is installed as a normal global package",
+          "slash /aih-update refreshes aihaus-pi package resources by default and reports aihaus-pi status first",
+          "Pi runtime update is not selected by default from the target repository; pass `--with-pi` to run `pi update`",
+          "normal global npm installs refresh with `npm install -g <source>`",
+          "Pi-managed package installs refresh with `pi update --extensions`",
           "preserved linked local checkouts instead of overwriting them",
           "preserved rules, kanban, memory, docs, and evidence",
         ],

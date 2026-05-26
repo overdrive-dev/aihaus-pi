@@ -58,7 +58,9 @@ Update both the Pi runtime used underneath aihaus and the global aihaus-pi packa
 aihaus update
 ```
 
-This runs `pi update` first, then refreshes the global aihaus-pi npm package when it is installed normally. Linked local development checkouts are preserved and reported instead of overwritten.
+This runs `pi update` first, then refreshes aihaus-pi. Normal global installs are refreshed through npm. Linked local development checkouts are updated with `git fetch --tags --prune`, `git pull --ff-only`, and `npm install --no-package-lock` when the checkout is clean; dirty checkouts are preserved with a clear note instead of being overwritten.
+
+Inside a target repository, `/aih-update` reports aihaus-pi status first and refreshes aihaus-pi package resources without running the global Pi runtime update by default. Pass `--with-pi` when you explicitly want `/aih-update` to run `pi update` too. Use `/aih-update status` for a read-only status report.
 
 For direct Pi package installation without the `aihaus` launcher:
 
