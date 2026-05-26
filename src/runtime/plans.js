@@ -5,7 +5,7 @@ import { spawnSync } from "node:child_process";
 import { WORKFLOW_STAGES } from "../workflow/stages.js";
 import { DEFAULT_COHORTS } from "../models/cohorts.js";
 import { GATEWAYS } from "../router/gateways.js";
-import { aihausStatusItems, runAihausUpdate, splitShellArgs, updateResultItems } from "./update.js";
+import { aihausStatusItems, inspectAihausPackage, runAihausUpdate, splitShellArgs, updateResultItems } from "./update.js";
 import { ensureProjectBaseline, projectPath, readJsonFile } from "../state/project.js";
 import { collectTaskBlockers, readKanban, tasksByStage } from "../state/kanban.js";
 import { addMcpPreset, commandForPlatform, listMcpServers, readMcpConfig, setMcpServerEnabled } from "../mcp/config.js";
@@ -22,7 +22,10 @@ import {
 
 const runtimeDir = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(runtimeDir, "..", "..");
-const packageJson = JSON.parse(readFileSync(resolve(packageRoot, "package.json"), "utf8"));
+
+function readPackageJsonFromDisk() {
+  return JSON.parse(readFileSync(resolve(packageRoot, "package.json"), "utf8"));
+}
 
 function ok(text) {
   return `OK ${text}`;
@@ -457,18 +460,38 @@ export async function buildUpdatePlan({ cwd, args = "" } = {}) {
     };
   }
 
-  const result = runAihausUpdate({ cwd, argv, packageRoot, packageJson, defaultIncludePi: false });
+  const packageJsonBeforeUpdate = readPackageJsonFromDisk();
+  const result = runAihausUpdate({ cwd, argv, packageRoot, packageJson: packageJsonBeforeUpdate, defaultIncludePi: false });
+  const packageJsonAfterUpdate = readPackageJsonFromDisk();
+  let currentAihausStatus = result.aihausStatus;
+  try {
+    currentAihausStatus = inspectAihausPackage({
+      packageName: packageJsonAfterUpdate.name,
+      packageRoot,
+      packageJson: packageJsonAfterUpdate,
+      cwd,
+    });
+  } catch {
+    currentAihausStatus = result.aihausStatus;
+  }
+
+  const statusItems = aihausStatusItems(currentAihausStatus);
+  if (result.aihausStatus?.currentVersion && result.aihausStatus.currentVersion !== currentAihausStatus?.currentVersion) {
+    statusItems.splice(1, 0, `version before this update command: ${result.aihausStatus.currentVersion}`);
+  }
 
   return {
     title: result.ok ? "aih-update report" : "aih-update failed",
     level: result.ok ? "success" : "error",
     summary: result.ok
-      ? "Update flow completed. Restart aihaus so the next session loads the refreshed runtime."
+      ? result.statusOnly
+        ? "aihaus-pi status read from disk. No update commands were run."
+        : "Update flow completed. Restart aihaus so the next session loads the refreshed runtime."
       : "Update flow completed with blockers. This command does not repair corrupted local state; use /aih-repair for repair work.",
     sections: [
       {
         title: "aihaus-pi status",
-        items: aihausStatusItems(result.aihausStatus),
+        items: statusItems,
       },
       {
         title: "Update scope",

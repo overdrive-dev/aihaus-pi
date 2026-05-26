@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.5 - 2026-05-26
+
+### Fixed
+
+- `/aih-update` now reads `package.json` from disk at command time and refreshes the displayed aihaus-pi status after update steps, preventing stale in-memory session versions such as `0.2.2` from being reported after the linked checkout is already current.
+- `/aih-update status` now says it is status-only instead of implying an update/restart happened.
+
+### Verification
+
+- `npm run smoke` passes with 37/37 tests.
+- `npm pack --dry-run --json` verifies aihaus-pi `0.2.5` release files.
+
 ## 0.2.4 - 2026-05-26
 
 ### Changed
