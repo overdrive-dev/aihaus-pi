@@ -25,6 +25,7 @@ It is a new public product under `overdrive-dev/aihaus-pi`. It is not a Claude C
 9. Linear is only a synced interface; the internal kanban is the source of truth.
 10. The harness is model-agnostic and Pi-native.
 11. Agents are agnostic by default: no stack, model, provider, or implementation assumption is embedded in agent definitions.
+12. MCP servers are external tool providers, not sources of truth, and must be configured through aihaus-pi policy gates.
 
 ## Primary User Experience
 
@@ -37,7 +38,7 @@ The customer describes a task in normal language. The harness:
 5. Stores the answers and updates the internal kanban.
 6. Produces BDD before development.
 7. Executes with TDD when approved.
-8. Produces automated checks plus Playwright/screenshot evidence when applicable.
+8. Produces automated checks plus Playwright test and MCP screenshot/trace evidence when applicable.
 9. Requires human checklist approval.
 10. Updates rules, docs, breadcrumbs, memory, kanban, and external sync.
 
@@ -61,6 +62,8 @@ The customer does not need to know which command to invoke. The intent router ch
 - autonomous-execution
 - review
 - docs-memory
+- validation
+- mcp-management
 
 Commands may exist for explicit control, but conversational routing is the primary experience.
 
@@ -100,15 +103,17 @@ The answer is saved as a traceable decision.
 
 Every rule must have planned evidence before development and actual evidence before closure. Preference:
 
-1. Playwright plus screenshot for UI and user flows.
-2. Automated tests for scalable regression coverage.
-3. Logs, API responses, screenshots, or operational evidence when automation is not enough.
-4. Human checklist always required as a separate gate.
+1. Automated tests for scalable regression coverage.
+2. Playwright test output for UI and user flows when automatable.
+3. Playwright MCP screenshot/trace/browser evidence when visual or interactive validation is needed.
+4. Logs, API responses, screenshots, or operational evidence when automation is not enough.
+5. Human checklist always required as a separate gate.
 
 ## Failure Modes That Are Unacceptable
 
 - Implementing the wrong rule with false confidence.
 - Missing a conflict with an existing rule.
+- Closing UI/user-flow work without Playwright evidence when it is feasible.
 - Closing without evidence.
 - Losing traceability of who decided what, why, and with which evidence.
 
@@ -124,7 +129,8 @@ The first useful release should include:
 - Internal kanban schema.
 - Markdown rule book structure.
 - SQLite/vector memory placeholders and Ollama checks.
-- Doctor, update, repair, cleanup commands.
+- MCP provider config with official Playwright preset.
+- Doctor, update, repair, cleanup, status, and MCP commands.
 - Agent governance specification.
 - Skill and prior-run-memory access contract for agents.
 - Smoke tests that prevent packaging drift.

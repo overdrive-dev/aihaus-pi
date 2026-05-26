@@ -57,10 +57,11 @@ Required where applicable:
 
 - unit/integration tests
 - lint/typecheck/build
-- Playwright plus screenshot for UI and user flows
+- Playwright test output for UI and user flows when automatable
+- Playwright MCP screenshot/trace/browser evidence for visual or interactive UI validation
 - smoke checks
 
-Exit: evidence is attached or blocker explains why it cannot be produced.
+Exit: evidence is attached in `aihaus-pi/evidence/<task-id>/` or blocker explains why it cannot be produced. UI/user-flow work cannot exit Testes without Playwright evidence when it is feasible.
 
 ### Revisao Humana
 
@@ -99,6 +100,7 @@ Required:
 - SQLite/vector memory refreshed or marked fresh
 - external sync completed if configured
 - evidence linked
+- MCP/tool usage recorded when external tools contributed to evidence
 
 ## Blockers
 
@@ -109,6 +111,16 @@ If a question cannot be answered in the current session, the task remains in Pla
 - recommended option when possible
 - impact of each option
 - next action
+
+## MCP And Playwright
+
+MCP providers are allowed during workflow execution only when configured in `aihaus-pi/mcp.json` and surfaced through aihaus-pi policy gates.
+
+Playwright is the default UI/user-flow validation provider:
+
+- `@playwright/test` provides deterministic automated evidence.
+- `@playwright/mcp` provides browser inspection, screenshots, traces, and interactive evidence.
+- missing Playwright configuration is a blocker for UI/user-flow completion unless explicitly waived by human review with rationale.
 
 ## Linear
 

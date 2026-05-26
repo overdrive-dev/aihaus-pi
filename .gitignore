@@ -1,7 +1,16 @@
 node_modules/
 dist/
+aihaus-pi/state/
+aihaus-pi/runtime/
+aihaus-pi/tmp/
+aihaus-pi/logs/
+aihaus-pi/evidence/
+aihaus-pi/memory/
 .aihaus-pi/state/
 .aihaus-pi/runtime/
 .aihaus-pi/tmp/
 .aihaus-pi/logs/
+.aihaus-pi/evidence/
+.aihaus-pi/memory/
+.pi/
 *.log

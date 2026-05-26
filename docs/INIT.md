@@ -40,6 +40,7 @@ It then writes the initial baseline:
 - agent guidance
 - kanban state
 - memory metadata
+- MCP provider config at `aihaus-pi/mcp.json`
 - run-memory policy
 - Pi skill and session settings recommendations
 - cohort config prompt
@@ -70,6 +71,19 @@ Digite 1, 2, 3 ou descreva:
 After provider login/configuration, init runs model cohort setup. The user chooses a preset or maps each cohort manually.
 
 This happens during init because agents cannot operate reliably until the harness knows which model setup to use for planning, doing, reviewing, verifying, memory, and low-risk tasks.
+
+## MCP Setup
+
+Init creates an empty `aihaus-pi/mcp.json`. MCP providers are added explicitly with `/aih-mcp` commands.
+
+The official Playwright preset is recommended when the project contains UI or user flows:
+
+```text
+/aih-mcp add playwright
+/aih-mcp install playwright --yes
+```
+
+The first command records the provider. The second command mutates the project and therefore requires explicit confirmation.
 
 ## Skills And Session Memory
 
@@ -108,6 +122,8 @@ Unknowns become questions or blockers. Hypotheses must not be treated as rules u
 - rules lack evidence
 - model cohorts missing
 - vector memory stale
+- MCP providers missing or unhealthy
+- Playwright missing for UI/user-flow validation
 - kanban points to missing tasks
 
 Refresh updates generated sections and preserves customer-authored sections.

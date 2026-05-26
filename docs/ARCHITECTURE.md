@@ -25,7 +25,7 @@ Current Pi constraints that shape the design:
 
 The public command is `aihaus`.
 
-`aihaus` is not a fork of Pi. It is a thin npm binary that launches `pi -e <aihaus-pi package root>` and forwards all user arguments. This keeps the product brand and onboarding stable while preserving Pi as the runtime, package loader, TUI, session manager, model selector, and extension host.
+`aihaus` is not a fork of Pi. It is a thin npm binary that launches `pi -e <aihaus-pi package root>` and forwards normal user arguments. The maintenance subcommand `aihaus update` is intercepted before launch so it can run `pi update` against the underlying runtime and then refresh the global aihaus-pi package when safe. This keeps the product brand and onboarding stable while preserving Pi as the runtime, package loader, TUI, session manager, model selector, and extension host.
 
 Forking Pi is reserved for a future case where aihaus-pi needs to change Pi core behavior, rebrand the whole TUI/runtime, or expose startup semantics that cannot be expressed through Pi packages, extensions, settings, skills, prompts, or CLI wrapping.
 
@@ -40,6 +40,7 @@ Responsibilities:
 - command registration
 - intent interception
 - context-pack injection
+- MCP provider/tool registration
 - tool-call policy checks
 - status notifications
 - message rendering hooks later
@@ -54,6 +55,8 @@ Router output includes:
 - confidence
 - required gateways
 - reason
+- required evidence
+- required skills or MCP providers
 - next question or action
 
 ### Skill Gateway
@@ -81,6 +84,22 @@ Responsibilities:
 - semantic lookup via local embeddings
 - impact/callers/history lookup
 - context pack construction
+
+### MCP Provider Bridge
+
+MCP servers are external tool providers configured in `aihaus-pi/mcp.json`.
+
+Responsibilities:
+
+- manage project-scoped MCP config
+- expose built-in presets such as Playwright
+- gate dependency installs behind explicit confirmation
+- launch enabled stdio MCP servers at session start
+- register MCP tools through `pi.registerTool()` with `mcp_<server>_<tool>` names
+- keep MCP tool identity and results in tool details for audit/evidence
+- restrict environment inheritance to a small safe base plus explicit env entries
+
+Playwright is the first official preset. `@playwright/test` remains the deterministic automated test runner; `@playwright/mcp` adds browser inspection, screenshots, traces, and interactive UI evidence.
 
 ### Cohort Model Router
 
@@ -114,6 +133,7 @@ Each agent context pack includes:
 - kanban task state
 - prior run memories for the same agent and related agents
 - prior evidence and blockers
+- enabled MCP providers and evidence requirements
 
 Prior run memory is derived from Pi session JSONL, aihaus-pi task journals, and agent output artifacts. It is summarized into durable markdown and indexed into vector memory. Raw sessions are evidence; curated run summaries are what agents should consume by default.
 
@@ -122,7 +142,7 @@ The harness must not rely on the base model remembering what happened. It must p
 The Pi-native implementation has three layers:
 
 1. Skill discovery: aihaus-pi ships package skills, accepts project/global skill paths from Pi settings, and records every selected `/skill:name` in the task journal.
-2. Memory resolution: before a gateway starts, aihaus-pi reads the internal kanban, markdown rules, vector memory, and prior run summaries for the same agent and related agents.
+2. Memory resolution: before a gateway starts, aihaus-pi reads the internal kanban, markdown rules, vector memory, prior run summaries, and enabled MCP provider metadata for the same agent and related agents.
 3. Context injection: aihaus-pi injects a compact context pack before agent execution, using Pi extension context hooks or a hidden custom message. Raw Pi session JSONL stays available as audit evidence, but curated run summaries are the default input to agents.
 
 This keeps the agent model-agnostic while still giving it the right working memory. The agent sees current rules, relevant skills, prior attempts, blockers, and evidence expectations without replaying entire conversations.
@@ -144,9 +164,10 @@ The context pack must identify every item as one of:
 Maintenance commands are separate:
 
 - `/aih-doctor`: read-only diagnosis
-- `/aih-update`: version update only
+- `/aih-update`: version update only; includes underlying Pi runtime update and aihaus-pi package refresh, but no state repair
 - `/aih-repair`: state repair without version update
 - `/aih-cleanup`: safe cleanup
+- `/aih-mcp`: MCP provider list, doctor, preset add, install, enable, and disable
 
 ## Data Sources
 
@@ -158,6 +179,7 @@ Agents must ground claims in:
 - prior agent run memory
 - kanban state
 - task journal
+- MCP provider metadata and MCP tool results when tools are used
 - code/tests/docs when technical investigation is needed
 - user answers
 
@@ -180,10 +202,11 @@ The first scaffold keeps runtime modules small and dependency-light:
 - route/gateway registry
 - workflow stage registry
 - cohort registry
-- command plans
+- command reports backed by local state
 - docs and smoke tests
+- MCP config/doctor/preset bridge
 
-SQLite, vector indexing, and Pi custom tools will be implemented in follow-up milestones without changing the public contract.
+SQLite persistence and full vector indexing will be implemented in follow-up milestones without changing the public contract.
 
 ## Pi Documentation Basis
 

@@ -39,14 +39,64 @@ export const GATEWAYS = [
     when: "durable rules, decisions, project docs, or agent memory need promotion",
     playbook: "update markdown and vector/index metadata with traceability",
   },
+  {
+    name: "validation",
+    when: "the user asks for tests, evidence, Playwright, screenshots, or release validation",
+    playbook: "run goal-backward checks and package evidence before review",
+  },
+  {
+    name: "mcp-management",
+    when: "the user configures MCP providers or external tool servers",
+    playbook: "configure, doctor, gate installs, and expose MCP tools through Pi policy",
+  },
 ];
 
+const ROUTE_KEYWORDS = {
+  "mcp-management": ["mcp", "playwright mcp", "aih-mcp", "servidor", "tool provider"],
+  validation: ["validacao", "validação", "teste", "testes", "evidencia", "evidência", "screenshot", "playwright", "trace"],
+  bugfix: ["bug", "erro", "falha", "quebrou", "corrigir", "fix"],
+  brainstorm: ["ideia", "brainstorm", "explorar", "opcoes", "opções"],
+  question: ["explica", "duvida", "dúvida", "pergunta", "como funciona"],
+  investigation: ["investiga", "investigar", "descobre", "diagnostica", "diagnóstico"],
+  "autonomous-execution": ["executa", "executar", "implementa", "implementar", "implantar", "aplicar"],
+  review: ["avalia", "avaliar", "revisa", "revisar", "audita", "audit", "review"],
+  "docs-memory": ["documenta", "documentar", "memoria", "memória", "registrar decisão", "decisao", "decisão"],
+  planning: ["planeja", "planejar", "prd", "bdd", "regra", "requisito", "plano"],
+};
+
+function normalize(text) {
+  return String(text ?? "")
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+}
+
+export function routeIntentDetailed(text) {
+  const lower = normalize(text);
+  const scores = new Map();
+  for (const [gateway, keywords] of Object.entries(ROUTE_KEYWORDS)) {
+    let score = 0;
+    const reasons = [];
+    for (const keyword of keywords) {
+      const normalizedKeyword = normalize(keyword);
+      if (lower.includes(normalizedKeyword)) {
+        score += normalizedKeyword.includes(" ") ? 2 : 1;
+        reasons.push(keyword);
+      }
+    }
+    if (score > 0) scores.set(gateway, { gateway, score, reasons });
+  }
+
+  const sorted = [...scores.values()].sort((a, b) => b.score - a.score || a.gateway.localeCompare(b.gateway));
+  const best = sorted[0] ?? { gateway: "planning", score: 0, reasons: ["default business-rule planning"] };
+  return {
+    intent: best.gateway,
+    confidence: Math.min(0.95, 0.45 + best.score * 0.15),
+    reason: best.reasons.join(", "),
+    candidates: sorted,
+  };
+}
+
 export function routeIntent(text) {
-  const lower = text.toLowerCase();
-  if (lower.includes("bug") || lower.includes("erro") || lower.includes("quebrou")) return "bugfix";
-  if (lower.includes("ideia") || lower.includes("brainstorm")) return "brainstorm";
-  if (lower.includes("explica") || lower.includes("duvida") || lower.includes("dúvida")) return "question";
-  if (lower.includes("investiga") || lower.includes("descobre")) return "investigation";
-  if (lower.includes("executa") || lower.includes("implementa")) return "autonomous-execution";
-  return "planning";
+  return routeIntentDetailed(text).intent;
 }

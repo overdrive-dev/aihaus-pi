@@ -5,7 +5,10 @@ import {
   buildUpdatePlan,
   buildCleanupPlan,
   buildStatusReport,
+  buildMcpReport,
 } from "./plans.js";
+import { buildContextPack } from "../context/pack.js";
+import { registerConfiguredMcpTools } from "../mcp/bridge.js";
 
 const COMMANDS = [
   ["aih-init", "Discover or bootstrap the project, configure model cohorts, and create the memory baseline.", buildInitPlan],
@@ -14,23 +17,40 @@ const COMMANDS = [
   ["aih-repair", "Repair harness state without updating aihaus-pi.", buildRepairPlan],
   ["aih-cleanup", "Clean safe harness leftovers, stale locks, worktrees, and caches.", buildCleanupPlan],
   ["aih-status", "Show internal kanban tasks, blockers, and next questions.", buildStatusReport],
+  ["aih-mcp", "Manage aihaus-pi MCP tool providers such as Playwright.", buildMcpReport],
 ];
 
-export function createAihausPiExtension(pi) {
+function notifyLevel(level) {
+  if (level === "error") return "error";
+  if (level === "warning") return "warning";
+  return "info";
+}
+
+export async function createAihausPiExtension(pi) {
   for (const [name, description, handler] of COMMANDS) {
     pi.registerCommand(name, {
       description,
       handler: async (args, ctx) => {
         const cwd = ctx?.cwd ?? process.cwd();
         const report = await handler({ cwd, args: String(args ?? "").trim() });
-        ctx?.ui?.notify?.(report.title, report.level ?? "info");
-        return {
-          action: "handled",
-          content: reportToMarkdown(report),
-        };
+        const markdown = reportToMarkdown(report);
+        ctx?.ui?.notify?.(report.title, notifyLevel(report.level));
+        pi.sendMessage?.(
+          {
+            customType: "aihaus-pi.report",
+            content: markdown,
+            display: true,
+            details: { command: name, level: report.level ?? "info" },
+          },
+          { triggerTurn: false },
+        );
       },
     });
   }
+
+  pi.on?.("session_start", async (_event, ctx) => {
+    await registerConfiguredMcpTools(pi, ctx);
+  });
 
   pi.on?.("input", async (event) => {
     const text = String(event?.text ?? "");
@@ -38,17 +58,19 @@ export function createAihausPiExtension(pi) {
     return { action: "continue" };
   });
 
-  pi.on?.("before_agent_start", async (event) => {
+  pi.on?.("before_agent_start", async (event, ctx) => {
+    const contextPack = await buildContextPack({ cwd: ctx?.cwd ?? process.cwd(), prompt: event.prompt ?? "" });
     return {
+      message: contextPack,
       systemPrompt: [
         event.systemPrompt ?? "",
-        "aihaus-pi operating rule: consult persisted project rules, kanban, markdown memory, and vector memory before treating any claim as true. Use business-rule-first language by default.",
+        "aihaus-pi operating rule: consult persisted project rules, kanban, markdown memory, and vector memory before treating any claim as true. Use business-rule-first language by default. Treat missing context as a blocker, not as permission to guess.",
       ].filter(Boolean).join("\n\n"),
     };
   });
 }
 
-function reportToMarkdown(report) {
+export function reportToMarkdown(report) {
   const lines = [`# ${report.title}`, ""];
   if (report.summary) lines.push(report.summary, "");
   for (const section of report.sections ?? []) {

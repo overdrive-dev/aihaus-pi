@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "sourceOfTruth": "aihaus-pi",
+  "stages": [
+    { "name": "Backlog", "purpose": "Raw demand captured from the user, internal kanban, or external sync.", "order": 1 },
+    { "name": "Planejamento", "purpose": "Business-rule gate. Produces BDD, impact map, evidence plan, and resolved assumptions.", "order": 2 },
+    { "name": "Desenvolvimento", "purpose": "TDD implementation guided by approved BDD and current rules.", "order": 3 },
+    { "name": "Testes", "purpose": "Automated checks, Playwright/screenshot evidence when applicable, and failure triage.", "order": 4 },
+    { "name": "Revisao Humana", "purpose": "Mandatory human checklist over rules, BDD, evidence, risk, and business acceptance.", "order": 5 },
+    { "name": "Aprovados", "purpose": "Accepted work waiting for deploy/release grouping.", "order": 6 },
+    { "name": "Deploy", "purpose": "Publish to the target environment and capture deploy/smoke evidence.", "order": 7 },
+    { "name": "Done", "purpose": "Final closure after docs, rules, kanban, memory, and external sync are updated.", "order": 8 }
+  ],
+  "tasks": [],
+  "blockers": [],
+  "questions": [],
+  "updatedAt": null
+}

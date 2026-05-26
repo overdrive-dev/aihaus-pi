@@ -1,0 +1,29 @@
+{
+  "version": 1,
+  "sourceOfTruth": "aihaus-pi local state",
+  "workflow": [
+    "Backlog",
+    "Planejamento",
+    "Desenvolvimento",
+    "Testes",
+    "Revisao Humana",
+    "Aprovados",
+    "Deploy",
+    "Done"
+  ],
+  "evidence": {
+    "directory": "aihaus-pi/evidence",
+    "requireHumanReview": true,
+    "uiUserFlowRequiresPlaywright": true
+  },
+  "memory": {
+    "markdown": "aihaus-pi/memory",
+    "runSummaries": "aihaus-pi/memory/run-summaries",
+    "vectorIndex": "aihaus-pi/state/memory-index.json"
+  },
+  "mcp": {
+    "config": "aihaus-pi/mcp.json",
+    "enabled": true,
+    "requireExplicitInstallConfirmation": true
+  }
+}

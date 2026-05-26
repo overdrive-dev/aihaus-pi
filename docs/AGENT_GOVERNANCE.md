@@ -26,6 +26,7 @@ They may declare:
 - tool requirements
 - required context pack
 - evidence expectations
+- MCP provider needs when external tools are required
 - anti-assumption rules
 
 ## Required Context Pack
@@ -40,6 +41,7 @@ Before work, every agent receives or fetches:
 - similar past tasks
 - prior run memories from this agent and related agents
 - current blockers
+- enabled MCP providers and tool provenance
 - required playbook
 - allowed actions
 - evidence required
@@ -130,4 +132,5 @@ An agent spec is not acceptable unless:
 - it distinguishes fact from inference
 - it defines when to ask the user
 - it defines evidence output
+- it declares MCP needs by capability, not by unverified server availability
 - it avoids repo-specific assumptions unless generated from project memory

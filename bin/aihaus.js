@@ -4,6 +4,7 @@ import { readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { aihausUpdateHelp, defaultPiCommand, runAihausUpdate } from "../src/runtime/update.js";
 
 const binDir = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(binDir, "..");
@@ -14,6 +15,25 @@ const args = process.argv.slice(2);
 if (args.includes("--aihaus-version")) {
   console.log(`aihaus-pi ${packageJson.version}`);
   process.exit(0);
+}
+
+if (args[0] === "update") {
+  const updateArgs = args.slice(1);
+  if (updateArgs.includes("--help") || updateArgs.includes("-h")) {
+    console.log(aihausUpdateHelp());
+    process.exit(0);
+  }
+
+  const result = runAihausUpdate({
+    argv: updateArgs,
+    cwd: process.cwd(),
+    packageRoot,
+    packageJson,
+    stdio: "inherit",
+    log: (line) => console.log(line),
+    warn: (line) => console.warn(line),
+  });
+  process.exit(result.ok ? 0 : 1);
 }
 
 function hasFlag(argv, longName, shortName) {
@@ -54,7 +74,7 @@ function withConfiguredModelDefaults(argv) {
 }
 
 const piArgs = withConfiguredModelDefaults(args);
-const piCommand = process.env.AIHAUS_PI_COMMAND ?? (process.platform === "win32" ? "pi.cmd" : "pi");
+const piCommand = defaultPiCommand();
 const result = spawnSync(piCommand, ["-e", packageRoot, ...piArgs], {
   stdio: "inherit",
   windowsHide: false,

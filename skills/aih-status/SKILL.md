@@ -5,4 +5,4 @@ description: Show internal kanban tasks, blockers, next questions, and sync stat
 
 # aih-status
 
-Show the internal kanban state. Linear is a sync interface, not the source of truth.
+Show the internal kanban state, blockers, next questions, MCP providers, and evidence status. Linear is a sync interface, not the source of truth.

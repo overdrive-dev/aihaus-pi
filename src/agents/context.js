@@ -26,6 +26,11 @@ export const AGENT_CONTEXT_SOURCES = [
     purpose: "Internal task state, blockers, next questions, BDD, and evidence status.",
     piMechanism: "Loaded from the internal kanban before Linear or other external sync is consulted.",
   },
+  {
+    name: "mcp-providers",
+    purpose: "Configured MCP providers, tool provenance, Playwright readiness, and external evidence capabilities.",
+    piMechanism: "Loaded from aihaus-pi/mcp.json and exposed through aihaus-pi bridge tools after policy checks.",
+  },
 ];
 
 export const PI_CONTEXT_MECHANISMS = [
@@ -58,6 +63,7 @@ export const CONTEXT_PACK_INJECTION = {
     "memory-hits",
     "prior-run-summaries",
     "blockers",
+    "mcp-providers",
     "evidence-required",
   ],
 };

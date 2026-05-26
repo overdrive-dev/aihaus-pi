@@ -10,6 +10,7 @@ import {
   buildAgentContextPlan,
   requiredContextSourceNames,
 } from "../src/agents/context.js";
+import { splitShellArgs } from "../src/runtime/update.js";
 
 test("workflow exposes simplified visible stages", () => {
   assert.deepEqual(WORKFLOW_STAGES.map((s) => s.name), [
@@ -46,11 +47,15 @@ test("gateway router covers the main operating modes", () => {
     "autonomous-execution",
     "review",
     "docs-memory",
+    "validation",
+    "mcp-management",
   ]) {
     assert.ok(names.includes(expected));
   }
   assert.equal(routeIntent("tem um erro no convite"), "bugfix");
   assert.equal(routeIntent("vamos brainstormar produto"), "brainstorm");
+  assert.equal(routeIntent("instalar mcp do playwright"), "mcp-management");
+  assert.equal(routeIntent("validar fluxo com screenshot"), "validation");
 });
 
 test("docs encode BDD planning and TDD development", () => {
@@ -74,6 +79,7 @@ test("agents require skills and prior run memory in context", () => {
     "vector-memory",
     "run-memory",
     "kanban",
+    "mcp-providers",
   ]);
   const governance = readFileSync(new URL("../docs/AGENT_GOVERNANCE.md", import.meta.url), "utf8");
   assert.match(governance, /Skills Access/);
@@ -100,6 +106,8 @@ test("package exposes aihaus launcher without forking Pi", () => {
 
   const launcher = readFileSync(new URL("../bin/aihaus.js", import.meta.url), "utf8");
   assert.match(launcher, /spawnSync\(piCommand, \["-e", packageRoot/);
+  assert.match(launcher, /args\[0\] === "update"/);
+  assert.match(launcher, /runAihausUpdate/);
   assert.match(launcher, /shell: process\.platform === "win32"/);
   assert.match(launcher, /defaultProvider/);
   assert.match(launcher, /defaultModel/);
@@ -108,4 +116,16 @@ test("package exposes aihaus launcher without forking Pi", () => {
   const architecture = readFileSync(new URL("../docs/ARCHITECTURE.md", import.meta.url), "utf8");
   assert.match(architecture, /The public command is `aihaus`/);
   assert.match(architecture, /not a fork of Pi/);
+});
+
+test("update argument parser supports pi update pass-through flags", () => {
+  assert.deepEqual(splitShellArgs('--self --force "npm:@scope/pkg"'), ["--self", "--force", "npm:@scope/pkg"]);
+});
+
+test("update argument parser preserves Windows paths", () => {
+  assert.deepEqual(splitShellArgs(String.raw`--extension C:\tmp\repo "D:\quoted path\pkg"`), [
+    "--extension",
+    String.raw`C:\tmp\repo`,
+    String.raw`D:\quoted path\pkg`,
+  ]);
 });

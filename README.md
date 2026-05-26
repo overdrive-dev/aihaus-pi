@@ -4,6 +4,12 @@ Business-rule-first autonomous development harness for Pi.
 
 aihaus-pi is the Pi-native successor product inspired by aihaus-flow. It is not tied to Claude Code or to any specific model. It uses Pi as the agent platform, lets the customer map models by operational cohort, and drives work through business rules, BDD planning, TDD development, evidence, human review, and durable memory.
 
+## Release Highlights
+
+Current release notes are in `CHANGELOG.md`.
+
+This release adds the functional local harness baseline, visible command reports, context-pack injection, MCP provider management, and the official Playwright MCP preset for UI/user-flow evidence.
+
 ## Product Contract
 
 The user can ask for anything in natural language. aihaus-pi interprets the intent, consults project memory, routes to the right skill gateway, and only asks questions when existing rules, docs, history, code, tests, and memory are not enough.
@@ -19,7 +25,7 @@ Core rules:
 - Planejamento produces BDD from business rules.
 - Desenvolvimento requires TDD.
 - Testes must run appropriate automated checks.
-- UI and user-flow work prefers Playwright plus screenshot evidence at completion.
+- UI and user-flow work requires Playwright test evidence when automatable and Playwright MCP screenshot/trace evidence when visual validation is needed.
 - Revisao Humana is always required.
 - Every useful conversation is persisted to kanban, markdown, SQLite memory, and history.
 - Agents receive a Pi-native context pack with selected skills, project memory, vector hits, prior run summaries, kanban state, blockers, and required evidence before acting.
@@ -45,6 +51,14 @@ aihaus
 The `aihaus` command is a thin launcher over Pi. It runs Pi with this aihaus-pi package loaded, so customers use the product command while the runtime remains Pi-native.
 
 `aihaus` also reads Pi's `defaultProvider` and `defaultModel` from `~/.pi/agent/settings.json` and passes them explicitly to Pi when you do not provide `--provider` or `--model`. That keeps the launcher aligned with the provider you configured through `/login`.
+
+Update both the Pi runtime used underneath aihaus and the global aihaus-pi package with:
+
+```bash
+aihaus update
+```
+
+This runs `pi update` first, then refreshes the global aihaus-pi npm package when it is installed normally. Linked local development checkouts are preserved and reported instead of overwritten.
 
 For direct Pi package installation without the `aihaus` launcher:
 
@@ -77,6 +91,32 @@ The init flow:
 3. Runs Socratic onboarding only for information that cannot be inferred.
 4. Creates project docs, business-rule markdown, kanban state, and memory indexes.
 5. Runs model cohort setup after the user logs in or configures providers in Pi.
+6. Creates `aihaus-pi/mcp.json` so project MCP providers can be added under aihaus-pi policy gates.
+
+## Local aihaus-pi Directory
+
+aihaus-pi keeps project-local harness artifacts under `aihaus-pi/` by default. This includes kanban, MCP config, rule drafts, memory metadata, logs, temporary files, and evidence packages. Legacy hidden folders such as `.aihaus-pi/` and Pi's `.pi/` are ignored so aihaus-pi-owned artifacts stay under one visible product namespace.
+
+## MCP And Playwright
+
+aihaus-pi can manage MCP providers as project-scoped tool providers. MCP servers are not the source of truth; they provide capabilities that must still follow rules, kanban, evidence, and human-review gates.
+
+The official Playwright preset is added with:
+
+```text
+/aih-mcp add playwright
+```
+
+That creates a `aihaus-pi/mcp.json` entry for `@playwright/mcp`. Dependency installation is explicit and confirmation-gated:
+
+```text
+/aih-mcp install playwright --yes
+```
+
+Playwright has two roles:
+
+- `@playwright/test` is the deterministic automated test runner.
+- `@playwright/mcp` is used for browser inspection, screenshots, traces, and interactive UI-flow evidence.
 
 ## Core Commands
 
@@ -84,10 +124,11 @@ The init flow:
 | --- | --- |
 | `/aih-init` | Discover or bootstrap a project; configure cohorts; create memory baseline. |
 | `/aih-doctor` | Read-only harness health check. |
-| `/aih-update` | Update aihaus-pi package/version. |
+| `/aih-update` | Run the aihaus update flow: underlying Pi runtime plus aihaus-pi package/version. |
 | `/aih-repair` | Repair harness state without updating version. |
 | `/aih-cleanup` | Clean safe harness leftovers, stale locks, worktrees, and caches. |
-| `/aih-status` | Show internal kanban tasks, blockers, and next questions. |
+| `/aih-status` | Show internal kanban tasks, blockers, MCP providers, and next questions. |
+| `/aih-mcp` | List, diagnose, add, install, enable, or disable MCP providers such as Playwright. |
 
 ## Documentation
 
@@ -95,5 +136,7 @@ The init flow:
 - `docs/ARCHITECTURE.md` defines modules and Pi integration points.
 - `docs/WORKFLOW.md` defines workflow stages and gates.
 - `docs/MODEL_COHORTS.md` defines cohort-based model routing.
+- `docs/MCP.md` defines MCP provider configuration, Playwright evidence, and security gates.
+- `CHANGELOG.md` summarizes release changes and verification evidence.
 - `docs/INIT.md` defines project onboarding.
 - `docs/AGENT_GOVERNANCE.md` defines agent, skill, and prior-run-memory rules.

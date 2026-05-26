@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "Business-rule-first autonomous development harness for Pi.",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/overdrive-dev/aihaus-pi.git"
+  },
   "type": "module",
   "private": false,
   "keywords": [
@@ -22,6 +26,7 @@
     "templates",
     "dist",
     "docs",
+    "CHANGELOG.md",
     "README.md",
     "LICENSE"
   ],
@@ -34,7 +39,9 @@
   "bin": {
     "aihaus": "bin/aihaus.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.17.4"
+  },
   "devDependencies": {},
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*",
