@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.3 - 2026-05-26
+
+### Fixed
+
+- Suppress generic empty `Operation aborted` assistant noise that can be emitted around aihaus command execution, so `/aih-update status` does not look like a failed aihaus-pi update when no command failed.
+
+### Verification
+
+- `npm run smoke` passes with 35/35 tests.
+- `npm pack --dry-run --json` verifies aihaus-pi `0.2.3` release files.
+
 ## 0.2.2 - 2026-05-26
 
 ### Fixed

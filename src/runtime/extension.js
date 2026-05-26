@@ -30,10 +30,13 @@ function notifyLevel(level) {
 }
 
 export async function createAihausPiExtension(pi) {
+  let lastAihausCommandAt = 0;
+
   for (const [name, description, handler] of COMMANDS) {
     pi.registerCommand(name, {
       description,
       handler: async (args, ctx) => {
+        lastAihausCommandAt = Date.now();
         const cwd = ctx?.cwd ?? process.cwd();
         const report = await handler({ cwd, args: String(args ?? "").trim() });
         const markdown = reportToMarkdown(report);
@@ -70,6 +73,31 @@ export async function createAihausPiExtension(pi) {
     return {
       action: "transform",
       text: buildSlicedPrompt(state),
+    };
+  });
+
+  pi.on?.("message_end", async (event) => {
+    const message = event?.message;
+    if (message?.role !== "assistant" || message.stopReason !== "aborted") return;
+    if (Date.now() - lastAihausCommandAt > 5000) return;
+
+    const hasVisibleContent = Array.isArray(message.content)
+      ? message.content.some((block) => {
+          if (block.type === "toolCall") return true;
+          if (block.type === "text") return Boolean(String(block.text ?? "").trim());
+          if (block.type === "thinking") return Boolean(String(block.thinking ?? "").trim());
+          return false;
+        })
+      : false;
+    if (hasVisibleContent) return;
+
+    return {
+      message: {
+        ...message,
+        stopReason: "stop",
+        errorMessage: undefined,
+        content: [{ type: "text", text: "" }],
+      },
     };
   });
 

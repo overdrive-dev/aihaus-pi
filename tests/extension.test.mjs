@@ -47,6 +47,41 @@ test("extension commands publish visible markdown reports through Pi custom mess
   }
 });
 
+test("extension suppresses generic aborted assistant noise around aihaus commands", async () => {
+  const cwd = tempProject();
+  const commands = new Map();
+  const events = new Map();
+  const pi = {
+    registerCommand(name, options) {
+      commands.set(name, options);
+    },
+    registerMessageRenderer() {},
+    sendMessage() {},
+    on(name, handler) {
+      events.set(name, handler);
+    },
+  };
+
+  try {
+    await createAihausPiExtension(pi);
+    await commands.get("aih-update").handler("status", { cwd, ui: { notify() {} } });
+    const result = await events.get("message_end")({
+      message: {
+        role: "assistant",
+        stopReason: "aborted",
+        errorMessage: "Request was aborted",
+        content: [],
+      },
+    });
+
+    assert.equal(result.message.stopReason, "stop");
+    assert.equal(result.message.errorMessage, undefined);
+    assert.deepEqual(result.message.content, [{ type: "text", text: "" }]);
+  } finally {
+    rmSync(cwd, { recursive: true, force: true });
+  }
+});
+
 test("extension injects an aihaus context pack before agent start", async () => {
   const cwd = tempProject();
   const events = new Map();
