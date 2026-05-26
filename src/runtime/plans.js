@@ -10,7 +10,7 @@ import { ensureProjectBaseline, projectPath, readJsonFile } from "../state/proje
 import { collectTaskBlockers, readKanban, tasksByStage } from "../state/kanban.js";
 import { addMcpPreset, commandForPlatform, listMcpServers, readMcpConfig, setMcpServerEnabled } from "../mcp/config.js";
 import { inspectMcpServers, inspectPlaywrightProject } from "../mcp/doctor.js";
-import { PLAYWRIGHT_MCP_SERVER_NAME, playwrightInstallPlan } from "../mcp/presets/playwright.js";
+import { ensurePlaywrightConfig, PLAYWRIGHT_HEADLESS_ENV, PLAYWRIGHT_MCP_SERVER_NAME, playwrightInstallPlan } from "../mcp/presets/playwright.js";
 import {
   advanceExecutionCursor,
   buildSlicedPrompt,
@@ -256,7 +256,11 @@ export async function buildMcpReport({ cwd, args = "" } = {}) {
       sections: [
         {
           title: "Server",
-          items: [`playwright: ${result.server.command} ${result.server.args.join(" ")}`, `required for: ${result.server.requiredFor.join(", ")}`],
+          items: [
+            `playwright: ${result.server.command} ${result.server.args.join(" ")}`,
+            `browser default: ${result.server.browser?.defaultMode ?? "headed"}, slowMo ${result.server.browser?.slowMo ?? 0}; headless is opt-in with ${result.server.browser?.headlessOptInArg ?? "--headless"}`,
+            `required for: ${result.server.requiredFor.join(", ")}`,
+          ],
         },
         {
           title: "Next step",
@@ -283,6 +287,7 @@ export async function buildMcpReport({ cwd, args = "" } = {}) {
     }
 
     const plan = playwrightInstallPlan();
+    const configPlan = `playwright.config.ts — create only when no Playwright config exists; headed default, no slowMo, headless opt-in with ${PLAYWRIGHT_HEADLESS_ENV}=1.`;
     if (!parsed.yes) {
       return {
         title: "aih-mcp install playwright",
@@ -292,6 +297,10 @@ export async function buildMcpReport({ cwd, args = "" } = {}) {
           {
             title: "Commands not run",
             items: plan.map((step) => `${commandText(step.command, step.args)} — ${step.reason}`),
+          },
+          {
+            title: "Config not written",
+            items: [configPlan],
           },
         ],
       };
@@ -305,12 +314,19 @@ export async function buildMcpReport({ cwd, args = "" } = {}) {
         output: [result.stdout, result.stderr].filter(Boolean).join("\n").trim(),
       };
     });
+    const installOk = results.every((result) => result.status === 0);
+    const configResult = installOk
+      ? ensurePlaywrightConfig({ cwd })
+      : { status: "skipped", message: "Skipped playwright.config.ts because one or more install commands failed." };
     const items = results.map((result) => `${commandText(result.step.command, result.step.args)}: ${result.status === 0 ? "ok" : `failed (${result.status})`}${result.output ? `\n\n  \`\`\`text\n${result.output.slice(0, 2000)}\n  \`\`\`` : ""}`);
     return {
       title: "aih-mcp install playwright",
-      level: results.every((result) => result.status === 0) ? "success" : "error",
+      level: installOk ? "success" : "error",
       summary: "Playwright install commands executed by explicit confirmation.",
-      sections: [{ title: "Install result", items }],
+      sections: [
+        { title: "Install result", items },
+        { title: "Playwright config", items: [`${configResult.status}: ${configResult.message}`] },
+      ],
     };
   }
 

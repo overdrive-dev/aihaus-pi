@@ -42,6 +42,12 @@ Shape:
       "enabled": true,
       "trust": "project",
       "timeoutMs": 30000,
+      "browser": {
+        "defaultMode": "headed",
+        "slowMo": 0,
+        "headlessOptInArg": "--headless",
+        "headlessOptInEnv": "AIHAUS_PLAYWRIGHT_HEADLESS"
+      },
       "requiredFor": ["ui-flow-evidence", "browser-validation"],
       "evidence": ["screenshot", "trace", "browser-state"],
       "env": {}
@@ -69,6 +75,13 @@ Playwright has two roles:
 
 1. `@playwright/test` is the deterministic automated test runner for CI and regression evidence.
 2. `@playwright/mcp` is an MCP provider for browser inspection, screenshots, traces, and interactive UI-flow evidence.
+
+Default browser policy for local aihaus evidence runs:
+
+- headed by default so the user can watch the browser while validation happens
+- no `slowMo` by default
+- headless is explicit opt-in with `AIHAUS_PLAYWRIGHT_HEADLESS=1 npx playwright test` for `@playwright/test`, or by adding `--headless` to the Playwright MCP server args when needed
+- `/aih-mcp install playwright --yes` creates `playwright.config.ts` only when the target project does not already have a Playwright config; existing configs are preserved
 
 For UI or user-flow work, the Testes stage cannot exit without planned and actual evidence. Preferred evidence:
 

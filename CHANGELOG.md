@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.4 - 2026-05-26
+
+### Changed
+
+- Playwright evidence policy now defaults to headed browser mode with no `slowMo`, so users can watch local validation runs.
+- Headless Playwright is explicit opt-in via `AIHAUS_PLAYWRIGHT_HEADLESS=1` for `@playwright/test` or `--headless` in Playwright MCP args.
+- `/aih-mcp install playwright --yes` now creates a non-overwriting `playwright.config.ts` when no Playwright config exists.
+
+### Verification
+
+- `npm run smoke` passes with 37/37 tests.
+- `npm pack --dry-run --json` verifies aihaus-pi `0.2.4` release files.
+
 ## 0.2.3 - 2026-05-26
 
 ### Fixed

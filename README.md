@@ -132,6 +132,14 @@ Playwright has two roles:
 - `@playwright/test` is the deterministic automated test runner.
 - `@playwright/mcp` is used for browser inspection, screenshots, traces, and interactive UI-flow evidence.
 
+aihaus-pi defaults Playwright evidence runs to headed browser mode with no `slowMo`, so the user can watch validation happen. Headless runs are opt-in, for example:
+
+```bash
+AIHAUS_PLAYWRIGHT_HEADLESS=1 npx playwright test
+```
+
+`/aih-mcp install playwright --yes` creates a `playwright.config.ts` with that policy only when the target project does not already have a Playwright config.
+
 ## Core Commands
 
 | Command | Purpose |

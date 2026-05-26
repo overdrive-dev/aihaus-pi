@@ -140,6 +140,8 @@ Playwright is the default UI/user-flow validation provider:
 
 - `@playwright/test` provides deterministic automated evidence.
 - `@playwright/mcp` provides browser inspection, screenshots, traces, and interactive evidence.
+- local evidence runs default to headed mode with no `slowMo`, so the user can watch validation happen.
+- headless runs are explicit opt-in with `AIHAUS_PLAYWRIGHT_HEADLESS=1` for tests or `--headless` in MCP args.
 - missing Playwright configuration is a blocker for UI/user-flow completion unless explicitly waived by human review with rationale.
 
 ## Linear

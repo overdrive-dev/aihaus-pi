@@ -49,6 +49,11 @@ export function defaultProjectConfig({ now = new Date().toISOString() } = {}) {
       directory: "aihaus-pi/evidence",
       requireHumanReview: true,
       uiUserFlowRequiresPlaywright: true,
+      playwright: {
+        defaultMode: "headed",
+        slowMo: 0,
+        headlessOptInEnv: "AIHAUS_PLAYWRIGHT_HEADLESS",
+      },
     },
     memory: {
       markdown: "aihaus-pi/memory",

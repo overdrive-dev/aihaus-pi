@@ -15,4 +15,5 @@ Required behavior:
 4. Record configured MCP providers in `aihaus-pi/mcp.json`.
 5. Use Playwright MCP for browser inspection, screenshots, and interactive UI-flow evidence.
 6. Use `@playwright/test` for deterministic automated regression evidence.
-7. Persist MCP/tool usage and generated evidence in the task journal/evidence package when available.
+7. Default Playwright browser evidence to headed mode with no `slowMo`; headless must be an explicit opt-in (`AIHAUS_PLAYWRIGHT_HEADLESS=1` for tests or `--headless` for MCP args).
+8. Persist MCP/tool usage and generated evidence in the task journal/evidence package when available.

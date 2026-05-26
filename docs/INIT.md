@@ -84,7 +84,7 @@ The official Playwright preset is recommended when the project contains UI or us
 /aih-mcp install playwright --yes
 ```
 
-The first command records the provider. The second command mutates the project and therefore requires explicit confirmation.
+The first command records the provider. The second command mutates the project and therefore requires explicit confirmation. When no Playwright config exists, it creates `playwright.config.ts` with aihaus-pi's browser policy: headed by default, no `slowMo`, and headless opt-in via `AIHAUS_PLAYWRIGHT_HEADLESS=1`.
 
 ## Sliced Execution Setup
 
