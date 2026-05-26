@@ -11,6 +11,14 @@ import { collectTaskBlockers, readKanban, tasksByStage } from "../state/kanban.j
 import { addMcpPreset, commandForPlatform, listMcpServers, readMcpConfig, setMcpServerEnabled } from "../mcp/config.js";
 import { inspectMcpServers, inspectPlaywrightProject } from "../mcp/doctor.js";
 import { PLAYWRIGHT_MCP_SERVER_NAME, playwrightInstallPlan } from "../mcp/presets/playwright.js";
+import {
+  advanceExecutionCursor,
+  buildSlicedPrompt,
+  clearExecutionState,
+  createExecutionPlan,
+  getActiveSlice,
+  readExecutionState,
+} from "../execution/slices.js";
 
 const runtimeDir = dirname(fileURLToPath(import.meta.url));
 const packageRoot = resolve(runtimeDir, "..", "..");
@@ -309,6 +317,117 @@ export async function buildMcpReport({ cwd, args = "" } = {}) {
   return { title: "aih-mcp failed", level: "error", summary: `Unknown MCP action: ${parsed.action}`, sections: [] };
 }
 
+export async function buildExecutionReport({ cwd, args = "" } = {}) {
+  const raw = String(args ?? "").trim();
+  const [action = "status"] = splitShellArgs(raw || "status");
+
+  if (["help", "--help", "-h"].includes(action)) {
+    return {
+      title: "aih-exec help",
+      summary: "Manage long-running aihaus-pi execution cursors so large requests run slice-by-slice instead of overflowing context.",
+      sections: [
+        {
+          title: "Commands",
+          items: [
+            "/aih-exec plan <large request>",
+            "/aih-exec status",
+            "/aih-exec next",
+            "/aih-exec clear",
+          ],
+        },
+      ],
+    };
+  }
+
+  if (action === "plan") {
+    const request = raw.slice("plan".length).trim();
+    if (!request) {
+      return { title: "aih-exec failed", level: "error", summary: "Missing request text after `plan`.", sections: [] };
+    }
+    const state = await createExecutionPlan({ cwd, request, reason: "explicit-aih-exec-plan" });
+    const active = getActiveSlice(state);
+    return {
+      title: "aih-exec plan",
+      level: "success",
+      summary: `Execution plan created with ${state.slices.length} slice${state.slices.length === 1 ? "" : "s"}.`,
+      sections: [
+        {
+          title: "Active slice",
+          items: [active ? `${active.id}: ${active.title}` : "none"],
+        },
+        {
+          title: "State files",
+          items: ["aihaus-pi/state/execution.json", "aihaus-pi/continue.md"],
+        },
+      ],
+    };
+  }
+
+  if (action === "next") {
+    try {
+      const state = await advanceExecutionCursor({ cwd });
+      const active = getActiveSlice(state);
+      return {
+        title: "aih-exec next",
+        level: state.status === "done" ? "success" : "success",
+        summary: state.status === "done" ? "Execution plan completed." : `Advanced to ${active.id}: ${active.title}`,
+        sections: [
+          {
+            title: "Cursor",
+            items: [state.status === "done" ? "all slices done" : buildSlicedPrompt(state)],
+          },
+        ],
+      };
+    } catch (err) {
+      return { title: "aih-exec failed", level: "error", summary: err.message, sections: [] };
+    }
+  }
+
+  if (action === "clear" || action === "reset") {
+    clearExecutionState(cwd);
+    return {
+      title: "aih-exec clear",
+      level: "success",
+      summary: "Execution cursor cleared.",
+      sections: [{ title: "State", items: ["aihaus-pi/state/execution.json marked cleared"] }],
+    };
+  }
+
+  if (action !== "status") {
+    return { title: "aih-exec failed", level: "error", summary: `Unknown execution action: ${action}`, sections: [] };
+  }
+
+  const state = readExecutionState(cwd);
+  if (!state || state.status === "cleared") {
+    return {
+      title: "aih-exec status",
+      level: "warning",
+      summary: "No active execution cursor.",
+      sections: [{ title: "Next step", items: ["Run `/aih-exec plan <large request>` or send a large multi-task prompt to create one automatically."] }],
+    };
+  }
+
+  const active = getActiveSlice(state);
+  return {
+    title: "aih-exec status",
+    level: state.status === "done" ? "success" : "warning",
+    summary: state.status === "done" ? "Execution plan is complete." : "Execution plan is active. Execute only the active slice.",
+    sections: [
+      {
+        title: "Cursor",
+        items: [
+          active ? `${active.id}: ${active.title}` : "none",
+          `progress: ${(state.cursor?.completed ?? []).length}/${state.slices?.length ?? 0}`,
+        ],
+      },
+      {
+        title: "Slices",
+        items: (state.slices ?? []).map((slice) => `${slice.id}: ${slice.status} — ${slice.title}`),
+      },
+    ],
+  };
+}
+
 export async function buildUpdatePlan({ cwd, args = "" } = {}) {
   let argv;
   try {
@@ -412,6 +531,8 @@ export async function buildStatusReport({ cwd } = {}) {
     mcp = { servers: {} };
   }
   const serverNames = Object.entries(mcp.servers ?? {}).map(([name, server]) => `${name}: ${server.enabled === false ? "disabled" : "enabled"}`);
+  const executionState = readExecutionState(cwd);
+  const activeSlice = getActiveSlice(executionState);
 
   return {
     title: "aih-status report",
@@ -429,6 +550,12 @@ export async function buildStatusReport({ cwd } = {}) {
       {
         title: "Blockers",
         items: blockers.length > 0 ? blockers.map((blocker) => (typeof blocker === "string" ? blocker : `${blocker.taskId ?? "project"}: ${blocker.text}`)) : ["No blockers recorded."],
+      },
+      {
+        title: "Execution cursor",
+        items: activeSlice
+          ? [`${activeSlice.id}: ${activeSlice.title}`, `progress: ${(executionState.cursor?.completed ?? []).length}/${executionState.slices?.length ?? 0}`, "Use /aih-exec next only after evidence for the active slice."]
+          : ["No active execution cursor."],
       },
       {
         title: "MCP providers",

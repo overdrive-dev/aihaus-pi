@@ -41,6 +41,7 @@ Before work, every agent receives or fetches:
 - similar past tasks
 - prior run memories from this agent and related agents
 - current blockers
+- active execution slice and continuation policy
 - enabled MCP providers and tool provenance
 - required playbook
 - allowed actions
@@ -56,7 +57,8 @@ Context resolution order:
 4. Query vector memory for similar rules, tasks, evidence, and gotchas.
 5. Load curated prior run summaries for the same agent and related agents.
 6. Load current internal kanban state, blockers, questions, and evidence status.
-7. Inspect code, tests, or raw Pi session JSONL only when the previous sources cannot answer the question with enough confidence.
+7. If an execution cursor is active, narrow work to the active slice before reading broad code or history.
+8. Inspect code, tests, or raw Pi session JSONL only when the previous sources cannot answer the question with enough confidence.
 
 ## Skills Access
 
@@ -132,5 +134,6 @@ An agent spec is not acceptable unless:
 - it distinguishes fact from inference
 - it defines when to ask the user
 - it defines evidence output
+- it refuses whole-request completion claims while execution slices remain pending
 - it declares MCP needs by capability, not by unverified server availability
 - it avoids repo-specific assumptions unless generated from project memory

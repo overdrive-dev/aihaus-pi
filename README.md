@@ -8,7 +8,7 @@ aihaus-pi is the Pi-native successor product inspired by aihaus-flow. It is not 
 
 Current release notes are in `CHANGELOG.md`.
 
-This release adds the functional local harness baseline, visible command reports, context-pack injection, MCP provider management, and the official Playwright MCP preset for UI/user-flow evidence.
+This release adds the functional local harness baseline, visible command reports, context-pack injection, MCP provider management, sliced execution for oversized requests, and the official Playwright MCP preset for UI/user-flow evidence.
 
 ## Product Contract
 
@@ -95,7 +95,19 @@ The init flow:
 
 ## Local aihaus-pi Directory
 
-aihaus-pi keeps project-local harness artifacts under `aihaus-pi/` by default. This includes kanban, MCP config, rule drafts, memory metadata, logs, temporary files, and evidence packages. Legacy hidden folders such as `.aihaus-pi/` and Pi's `.pi/` are ignored so aihaus-pi-owned artifacts stay under one visible product namespace.
+aihaus-pi keeps project-local harness artifacts under `aihaus-pi/` by default. This includes kanban, MCP config, rule drafts, memory metadata, sliced-execution cursors, continuation handoffs, logs, temporary files, and evidence packages. Legacy hidden folders such as `.aihaus-pi/` and Pi's `.pi/` are ignored so aihaus-pi-owned artifacts stay under one visible product namespace.
+
+## Sliced Execution For Large Requests
+
+When a request is too large or contains many tasks, aihaus-pi splits it into resumable slices instead of sending one giant instruction block to the model. Cursor state is stored in `aihaus-pi/state/execution.json`, and cross-session handoff goes to `aihaus-pi/continue.md`.
+
+```text
+/aih-exec plan <large request>
+/aih-exec status
+/aih-exec next
+```
+
+The agent is instructed to execute only the active slice and not claim the full request is complete while pending slices remain.
 
 ## MCP And Playwright
 
@@ -129,6 +141,7 @@ Playwright has two roles:
 | `/aih-cleanup` | Clean safe harness leftovers, stale locks, worktrees, and caches. |
 | `/aih-status` | Show internal kanban tasks, blockers, MCP providers, and next questions. |
 | `/aih-mcp` | List, diagnose, add, install, enable, or disable MCP providers such as Playwright. |
+| `/aih-exec` | Plan, inspect, advance, or clear sliced execution cursors for large requests. |
 
 ## Documentation
 
@@ -137,6 +150,7 @@ Playwright has two roles:
 - `docs/WORKFLOW.md` defines workflow stages and gates.
 - `docs/MODEL_COHORTS.md` defines cohort-based model routing.
 - `docs/MCP.md` defines MCP provider configuration, Playwright evidence, and security gates.
+- `docs/CONTEXT_MANAGEMENT.md` defines context budgeting and sliced execution.
 - `CHANGELOG.md` summarizes release changes and verification evidence.
 - `docs/INIT.md` defines project onboarding.
 - `docs/AGENT_GOVERNANCE.md` defines agent, skill, and prior-run-memory rules.

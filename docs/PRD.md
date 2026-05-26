@@ -26,6 +26,7 @@ It is a new public product under `overdrive-dev/aihaus-pi`. It is not a Claude C
 10. The harness is model-agnostic and Pi-native.
 11. Agents are agnostic by default: no stack, model, provider, or implementation assumption is embedded in agent definitions.
 12. MCP servers are external tool providers, not sources of truth, and must be configured through aihaus-pi policy gates.
+13. Oversized or multi-task requests must be sliced into a persisted execution cursor instead of executed from one giant prompt.
 
 ## Primary User Experience
 
@@ -34,13 +35,14 @@ The customer describes a task in normal language. The harness:
 1. Detects intent.
 2. Looks up related rules, tasks, docs, code, tests, and memory.
 3. Routes to a skill gateway.
-4. Asks numbered Socratic questions only for unresolved rule gaps.
-5. Stores the answers and updates the internal kanban.
-6. Produces BDD before development.
-7. Executes with TDD when approved.
-8. Produces automated checks plus Playwright test and MCP screenshot/trace evidence when applicable.
-9. Requires human checklist approval.
-10. Updates rules, docs, breadcrumbs, memory, kanban, and external sync.
+4. Splits oversized or multi-task requests into resumable slices when needed.
+5. Asks numbered Socratic questions only for unresolved rule gaps.
+6. Stores the answers and updates the internal kanban.
+7. Produces BDD before development.
+8. Executes with TDD when approved.
+9. Produces automated checks plus Playwright test and MCP screenshot/trace evidence when applicable.
+10. Requires human checklist approval.
+11. Updates rules, docs, breadcrumbs, memory, kanban, execution cursor, and external sync.
 
 ## Workflow
 
@@ -64,6 +66,7 @@ The customer does not need to know which command to invoke. The intent router ch
 - docs-memory
 - validation
 - mcp-management
+- execution-management
 
 Commands may exist for explicit control, but conversational routing is the primary experience.
 
@@ -115,6 +118,7 @@ Every rule must have planned evidence before development and actual evidence bef
 - Missing a conflict with an existing rule.
 - Closing UI/user-flow work without Playwright evidence when it is feasible.
 - Closing without evidence.
+- Claiming a whole oversized request is complete while pending execution slices remain.
 - Losing traceability of who decided what, why, and with which evidence.
 
 ## MVP Scope
@@ -130,6 +134,7 @@ The first useful release should include:
 - Markdown rule book structure.
 - SQLite/vector memory placeholders and Ollama checks.
 - MCP provider config with official Playwright preset.
+- Sliced execution cursor for oversized and multi-task requests.
 - Doctor, update, repair, cleanup, status, and MCP commands.
 - Agent governance specification.
 - Skill and prior-run-memory access contract for agents.

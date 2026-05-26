@@ -6,9 +6,11 @@ import {
   buildCleanupPlan,
   buildStatusReport,
   buildMcpReport,
+  buildExecutionReport,
 } from "./plans.js";
 import { buildContextPack } from "../context/pack.js";
 import { registerConfiguredMcpTools } from "../mcp/bridge.js";
+import { buildSlicedPrompt, createExecutionPlan, shouldSliceInput } from "../execution/slices.js";
 
 const COMMANDS = [
   ["aih-init", "Discover or bootstrap the project, configure model cohorts, and create the memory baseline.", buildInitPlan],
@@ -18,6 +20,7 @@ const COMMANDS = [
   ["aih-cleanup", "Clean safe harness leftovers, stale locks, worktrees, and caches.", buildCleanupPlan],
   ["aih-status", "Show internal kanban tasks, blockers, and next questions.", buildStatusReport],
   ["aih-mcp", "Manage aihaus-pi MCP tool providers such as Playwright.", buildMcpReport],
+  ["aih-exec", "Manage long-running execution cursors for large multi-task requests.", buildExecutionReport],
 ];
 
 function notifyLevel(level) {
@@ -52,10 +55,22 @@ export async function createAihausPiExtension(pi) {
     await registerConfiguredMcpTools(pi, ctx);
   });
 
-  pi.on?.("input", async (event) => {
+  pi.on?.("input", async (event, ctx) => {
     const text = String(event?.text ?? "");
-    if (text.startsWith("/aih-")) return { action: "continue" };
-    return { action: "continue" };
+    if (event?.source === "extension") return { action: "continue" };
+    if (text.startsWith("/")) return { action: "continue" };
+    if (!shouldSliceInput(text)) return { action: "continue" };
+
+    const state = await createExecutionPlan({
+      cwd: ctx?.cwd ?? process.cwd(),
+      request: text,
+      reason: text.length > 8000 ? "prompt-length-budget" : "multi-task-budget",
+    });
+    ctx?.ui?.notify?.(`aihaus-pi split this request into ${state.slices.length} slices`, "warning");
+    return {
+      action: "transform",
+      text: buildSlicedPrompt(state),
+    };
   });
 
   pi.on?.("before_agent_start", async (event, ctx) => {

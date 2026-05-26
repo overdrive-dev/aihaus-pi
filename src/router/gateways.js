@@ -49,9 +49,15 @@ export const GATEWAYS = [
     when: "the user configures MCP providers or external tool servers",
     playbook: "configure, doctor, gate installs, and expose MCP tools through Pi policy",
   },
+  {
+    name: "execution-management",
+    when: "the user manages oversized requests, slices, continuation, or execution cursors",
+    playbook: "slice large work, execute only the active slice, persist continuation, and advance after evidence",
+  },
 ];
 
 const ROUTE_KEYWORDS = {
+  "execution-management": ["aih-exec", "slice", "slices", "fatiar", "fatia", "cursor", "continue", "continuar", "contexto", "context"],
   "mcp-management": ["mcp", "playwright mcp", "aih-mcp", "servidor", "tool provider"],
   validation: ["validacao", "validação", "teste", "testes", "evidencia", "evidência", "screenshot", "playwright", "trace"],
   bugfix: ["bug", "erro", "falha", "quebrou", "corrigir", "fix"],

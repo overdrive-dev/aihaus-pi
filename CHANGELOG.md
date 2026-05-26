@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.2.0 - 2026-05-26
+
+### Added
+
+- Sliced execution cursor for oversized or multi-task requests via `/aih-exec`.
+- Automatic prompt transformation for large task bundles so agents execute only the active slice.
+- Context-pack budget enforcement that preserves active slice, blockers, and evidence requirements first.
+- Durable continuation handoff at `aihaus-pi/continue.md`.
+- `docs/CONTEXT_MANAGEMENT.md` for context-budget and resume protocol.
+
+### Verification
+
+- `npm run smoke` passes with 27/27 tests after sliced-execution changes.
+- `npm pack --dry-run --json` includes sliced-execution runtime, docs, and skill files.
+
 ## 0.1.0 - 2026-05-26
 
 Initial public scaffold plus functional harness baseline.

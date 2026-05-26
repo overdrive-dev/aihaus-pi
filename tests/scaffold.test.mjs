@@ -49,6 +49,7 @@ test("gateway router covers the main operating modes", () => {
     "docs-memory",
     "validation",
     "mcp-management",
+    "execution-management",
   ]) {
     assert.ok(names.includes(expected));
   }
@@ -56,6 +57,7 @@ test("gateway router covers the main operating modes", () => {
   assert.equal(routeIntent("vamos brainstormar produto"), "brainstorm");
   assert.equal(routeIntent("instalar mcp do playwright"), "mcp-management");
   assert.equal(routeIntent("validar fluxo com screenshot"), "validation");
+  assert.equal(routeIntent("continuar pelo cursor de fatias"), "execution-management");
 });
 
 test("docs encode BDD planning and TDD development", () => {
@@ -80,6 +82,7 @@ test("agents require skills and prior run memory in context", () => {
     "run-memory",
     "kanban",
     "mcp-providers",
+    "execution-cursor",
   ]);
   const governance = readFileSync(new URL("../docs/AGENT_GOVERNANCE.md", import.meta.url), "utf8");
   assert.match(governance, /Skills Access/);
