@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "cohorts": {
+    "planner-binding": {
+      "provider": "",
+      "model": "",
+      "thinking": "xhigh",
+      "fallback": []
+    },
+    "planner": {
+      "provider": "",
+      "model": "",
+      "thinking": "high",
+      "fallback": []
+    },
+    "researcher": {
+      "provider": "",
+      "model": "",
+      "thinking": "medium",
+      "fallback": []
+    },
+    "doer": {
+      "provider": "",
+      "model": "",
+      "thinking": "medium",
+      "fallback": []
+    },
+    "reviewer": {
+      "provider": "",
+      "model": "",
+      "thinking": "high",
+      "fallback": []
+    },
+    "verifier": {
+      "provider": "",
+      "model": "",
+      "thinking": "high",
+      "fallback": []
+    },
+    "memory": {
+      "provider": "",
+      "model": "",
+      "thinking": "medium",
+      "fallback": []
+    },
+    "cheap": {
+      "provider": "",
+      "model": "",
+      "thinking": "low",
+      "fallback": []
+    }
+  }
+}

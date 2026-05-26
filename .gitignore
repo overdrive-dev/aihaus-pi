@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.aihaus-pi/state/
+.aihaus-pi/runtime/
+.aihaus-pi/tmp/
+.aihaus-pi/logs/
+*.log

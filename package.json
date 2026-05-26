@@ -1,0 +1,52 @@
+{
+  "name": "aihaus-pi",
+  "version": "0.1.0",
+  "description": "Business-rule-first autonomous development harness for Pi.",
+  "license": "MIT",
+  "type": "module",
+  "private": false,
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "aihaus",
+    "agent",
+    "workflow",
+    "business-rules"
+  ],
+  "files": [
+    "extensions",
+    "skills",
+    "prompts",
+    "templates",
+    "dist",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "build": "node scripts/check.mjs",
+    "check": "node scripts/check.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "smoke": "npm run check && npm test"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-agent-core": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  },
+  "pi": {
+    "extensions": [
+      "extensions"
+    ],
+    "skills": [
+      "skills"
+    ],
+    "prompts": [
+      "prompts"
+    ]
+  }
+}

@@ -1,0 +1,93 @@
+import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { test } from "node:test";
+import { DEFAULT_COHORTS } from "../src/models/cohorts.js";
+import { GATEWAYS, routeIntent } from "../src/router/gateways.js";
+import { WORKFLOW_STAGES } from "../src/workflow/stages.js";
+import {
+  CONTEXT_PACK_INJECTION,
+  PI_CONTEXT_MECHANISMS,
+  buildAgentContextPlan,
+  requiredContextSourceNames,
+} from "../src/agents/context.js";
+
+test("workflow exposes simplified visible stages", () => {
+  assert.deepEqual(WORKFLOW_STAGES.map((s) => s.name), [
+    "Backlog",
+    "Planejamento",
+    "Desenvolvimento",
+    "Testes",
+    "Revisao Humana",
+    "Aprovados",
+    "Deploy",
+    "Done",
+  ]);
+});
+
+test("cohorts are operational and model agnostic", () => {
+  assert.ok(DEFAULT_COHORTS.length >= 8);
+  for (const cohort of DEFAULT_COHORTS) {
+    assert.ok(cohort.name);
+    assert.ok(cohort.purpose);
+    assert.ok(!JSON.stringify(cohort).toLowerCase().includes("claude"));
+    assert.ok(!JSON.stringify(cohort).toLowerCase().includes("sonnet"));
+    assert.ok(!JSON.stringify(cohort).toLowerCase().includes("opus"));
+  }
+});
+
+test("gateway router covers the main operating modes", () => {
+  const names = GATEWAYS.map((g) => g.name);
+  for (const expected of [
+    "question",
+    "brainstorm",
+    "planning",
+    "bugfix",
+    "investigation",
+    "autonomous-execution",
+    "review",
+    "docs-memory",
+  ]) {
+    assert.ok(names.includes(expected));
+  }
+  assert.equal(routeIntent("tem um erro no convite"), "bugfix");
+  assert.equal(routeIntent("vamos brainstormar produto"), "brainstorm");
+});
+
+test("docs encode BDD planning and TDD development", () => {
+  const workflow = readFileSync(new URL("../docs/WORKFLOW.md", import.meta.url), "utf8");
+  assert.match(workflow, /Planejamento/);
+  assert.match(workflow, /BDD/);
+  assert.match(workflow, /TDD is mandatory/);
+});
+
+test("agent governance requires agnostic agents", () => {
+  const governance = readFileSync(new URL("../docs/AGENT_GOVERNANCE.md", import.meta.url), "utf8");
+  assert.match(governance, /Agents must be agnostic/);
+  assert.match(governance, /cohort instead of model/);
+  assert.match(governance, /agent-author\/reviewer/);
+});
+
+test("agents require skills and prior run memory in context", () => {
+  assert.deepEqual(requiredContextSourceNames(), [
+    "skills",
+    "markdown-memory",
+    "vector-memory",
+    "run-memory",
+    "kanban",
+  ]);
+  const governance = readFileSync(new URL("../docs/AGENT_GOVERNANCE.md", import.meta.url), "utf8");
+  assert.match(governance, /Skills Access/);
+  assert.match(governance, /Prior Run Memory/);
+});
+
+test("context plan uses Pi-native skills, sessions, and custom context injection", () => {
+  assert.ok(PI_CONTEXT_MECHANISMS.some((mechanism) => mechanism.name === "skill-discovery"));
+  assert.ok(PI_CONTEXT_MECHANISMS.some((mechanism) => mechanism.name === "session-indexing"));
+  assert.equal(CONTEXT_PACK_INJECTION.customType, "aihaus-pi.context-pack");
+
+  const plan = buildAgentContextPlan({ gateway: "planning", agent: "planner" });
+  assert.equal(plan.agent, "planner");
+  assert.equal(plan.gateway, "planning");
+  assert.equal(plan.injection, "aihaus-pi.context-pack");
+  assert.ok(plan.rawSessionPolicy.includes("curated summaries"));
+});
