@@ -41,6 +41,7 @@ It then writes the initial baseline:
 - kanban state
 - memory metadata
 - MCP provider config at `aihaus-pi/mcp.json`
+- sliced execution policy and continuation path
 - run-memory policy
 - Pi skill and session settings recommendations
 - cohort config prompt
@@ -85,6 +86,19 @@ The official Playwright preset is recommended when the project contains UI or us
 
 The first command records the provider. The second command mutates the project and therefore requires explicit confirmation.
 
+## Sliced Execution Setup
+
+Init records the default execution-cursor policy in `aihaus-pi/config.json`.
+
+Runtime execution state is created only when needed:
+
+```text
+aihaus-pi/state/execution.json
+aihaus-pi/continue.md
+```
+
+The purpose is to prevent large task bundles from being partially executed after context compaction or model context exhaustion.
+
 ## Skills And Session Memory
 
 Init must verify that aihaus-pi package skills are visible to Pi and ask whether the project should add extra trusted skill directories.
@@ -124,6 +138,7 @@ Unknowns become questions or blockers. Hypotheses must not be treated as rules u
 - vector memory stale
 - MCP providers missing or unhealthy
 - Playwright missing for UI/user-flow validation
+- execution cursor points to a missing or completed slice
 - kanban points to missing tasks
 
 Refresh updates generated sections and preserves customer-authored sections.

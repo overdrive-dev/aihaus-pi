@@ -40,6 +40,7 @@ Responsibilities:
 - command registration
 - intent interception
 - context-pack injection
+- sliced execution and continuation cursor management
 - MCP provider/tool registration
 - tool-call policy checks
 - status notifications
@@ -68,6 +69,20 @@ Each gateway has a playbook. Gateways are not just slash commands; they are oper
 Owns internal kanban state. Linear can mirror it, but cannot replace it.
 
 State transitions must be persisted before external sync.
+
+### Sliced Execution Engine
+
+Large requests are executed as a persisted queue with a cursor instead of one giant prompt.
+
+Responsibilities:
+
+- detect oversized or multi-task user input before agent execution
+- write `aihaus-pi/state/execution.json` as machine-readable cursor state
+- write `aihaus-pi/continue.md` as human-readable handoff
+- transform oversized prompts into active-slice-only prompts
+- expose `/aih-exec plan`, `/aih-exec status`, `/aih-exec next`, and `/aih-exec clear`
+- prevent whole-request completion claims while pending slices remain
+- keep context packs budgeted and prioritize active slice, blockers, rules, and evidence
 
 ### Rules And Docs
 
@@ -134,6 +149,7 @@ Each agent context pack includes:
 - prior run memories for the same agent and related agents
 - prior evidence and blockers
 - enabled MCP providers and evidence requirements
+- active execution slice and continuation policy
 
 Prior run memory is derived from Pi session JSONL, aihaus-pi task journals, and agent output artifacts. It is summarized into durable markdown and indexed into vector memory. Raw sessions are evidence; curated run summaries are what agents should consume by default.
 
@@ -142,8 +158,8 @@ The harness must not rely on the base model remembering what happened. It must p
 The Pi-native implementation has three layers:
 
 1. Skill discovery: aihaus-pi ships package skills, accepts project/global skill paths from Pi settings, and records every selected `/skill:name` in the task journal.
-2. Memory resolution: before a gateway starts, aihaus-pi reads the internal kanban, markdown rules, vector memory, prior run summaries, and enabled MCP provider metadata for the same agent and related agents.
-3. Context injection: aihaus-pi injects a compact context pack before agent execution, using Pi extension context hooks or a hidden custom message. Raw Pi session JSONL stays available as audit evidence, but curated run summaries are the default input to agents.
+2. Memory resolution: before a gateway starts, aihaus-pi reads the internal kanban, markdown rules, vector memory, prior run summaries, active execution cursor, and enabled MCP provider metadata for the same agent and related agents.
+3. Context injection: aihaus-pi injects a compact, budgeted context pack before agent execution, using Pi extension context hooks or a hidden custom message. Raw Pi session JSONL stays available as audit evidence, but curated run summaries and active-slice state are the default input to agents.
 
 This keeps the agent model-agnostic while still giving it the right working memory. The agent sees current rules, relevant skills, prior attempts, blockers, and evidence expectations without replaying entire conversations.
 
@@ -168,6 +184,7 @@ Maintenance commands are separate:
 - `/aih-repair`: state repair without version update
 - `/aih-cleanup`: safe cleanup
 - `/aih-mcp`: MCP provider list, doctor, preset add, install, enable, and disable
+- `/aih-exec`: sliced execution plan, status, cursor advance, and clear
 
 ## Data Sources
 
@@ -179,6 +196,7 @@ Agents must ground claims in:
 - prior agent run memory
 - kanban state
 - task journal
+- execution cursor and continuation handoff
 - MCP provider metadata and MCP tool results when tools are used
 - code/tests/docs when technical investigation is needed
 - user answers
@@ -205,6 +223,7 @@ The first scaffold keeps runtime modules small and dependency-light:
 - command reports backed by local state
 - docs and smoke tests
 - MCP config/doctor/preset bridge
+- sliced execution cursor and context budget enforcement
 
 SQLite persistence and full vector indexing will be implemented in follow-up milestones without changing the public contract.
 

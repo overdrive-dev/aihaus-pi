@@ -60,6 +60,12 @@ export function defaultProjectConfig({ now = new Date().toISOString() } = {}) {
       enabled: true,
       requireExplicitInstallConfirmation: true,
     },
+    execution: {
+      cursor: "aihaus-pi/state/execution.json",
+      handoff: "aihaus-pi/continue.md",
+      maxPromptChars: 8000,
+      maxDetectedItems: 7,
+    },
   };
 }
 

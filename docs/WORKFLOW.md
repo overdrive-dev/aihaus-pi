@@ -18,7 +18,9 @@ Backlog -> Planejamento -> Desenvolvimento -> Testes -> Revisao Humana -> Aprova
 
 Captures raw demand. It may come from the user, internal kanban, or Linear sync. No execution happens here.
 
-Exit: task has enough title/context to start discovery.
+If demand is too large for a reliable single model turn, aihaus-pi creates a sliced execution cursor before work proceeds.
+
+Exit: task has enough title/context to start discovery, or a sliced execution plan exists with an active first slice.
 
 ### Planejamento
 
@@ -40,6 +42,8 @@ Exit: BDD scenarios and evidence plan are approved or the task is blocked with t
 
 TDD is mandatory.
 
+For sliced execution, Desenvolvimento may only act on the active slice in `aihaus-pi/state/execution.json`.
+
 The agent must:
 
 - start from approved BDD
@@ -47,7 +51,7 @@ The agent must:
 - add code breadcrumbs where business rules are non-obvious
 - update rules/docs when behavior changes
 
-Exit: implementation exists, tests exist, and traceability from rule to change is recorded.
+Exit: implementation exists, tests exist, traceability from rule to change is recorded, and the active slice has evidence before `/aih-exec next` advances the cursor.
 
 ### Testes
 
@@ -101,6 +105,22 @@ Required:
 - external sync completed if configured
 - evidence linked
 - MCP/tool usage recorded when external tools contributed to evidence
+
+## Sliced Execution
+
+Large or multi-task requests are persisted as a cursor:
+
+```text
+aihaus-pi/state/execution.json
+aihaus-pi/continue.md
+```
+
+Rules:
+
+- execute only the active slice
+- do not claim the whole request is complete while pending slices remain
+- advance with `/aih-exec next` only after current-slice evidence exists
+- use `/aih-exec status` after context compaction or session resume
 
 ## Blockers
 

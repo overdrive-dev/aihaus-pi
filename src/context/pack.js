@@ -5,6 +5,7 @@ import { CONTEXT_PACK_INJECTION } from "../agents/context.js";
 import { readKanban, activeTasks, collectTaskBlockers } from "../state/kanban.js";
 import { projectPath, readJsonFile } from "../state/project.js";
 import { readMcpConfig } from "../mcp/config.js";
+import { getActiveSlice, readExecutionState } from "../execution/slices.js";
 
 const UI_TERMS = ["ui", "tela", "frontend", "visual", "browser", "fluxo", "user-flow", "playwright", "screenshot"];
 
@@ -34,12 +35,39 @@ function section(title, lines) {
   return `## ${title}\n${body}`;
 }
 
-export async function buildContextPack({ cwd, prompt = "" } = {}) {
+function enforceContextBudget(content, maxChars) {
+  const budget = {
+    maxChars,
+    originalChars: content.length,
+    finalChars: content.length,
+    truncated: false,
+  };
+
+  if (!maxChars || content.length <= maxChars) return { content, budget };
+
+  const suffix = [
+    "",
+    "## Context budget",
+    `- truncated: true`,
+    `- originalChars: ${content.length}`,
+    `- maxChars: ${maxChars}`,
+    "- policy: active slice, blockers, and evidence requirements are preserved first; overflow details stay in aihaus-pi state files.",
+  ].join("\n");
+  const headSize = Math.max(0, maxChars - suffix.length - 1);
+  const next = `${content.slice(0, headSize).trimEnd()}\n${suffix}`;
+  budget.finalChars = next.length;
+  budget.truncated = true;
+  return { content: next.slice(0, maxChars), budget: { ...budget, finalChars: Math.min(next.length, maxChars) } };
+}
+
+export async function buildContextPack({ cwd, prompt = "", maxChars = 12_000 } = {}) {
   const gateway = routeIntent(prompt);
   const kanban = readKanban(cwd);
   const tasks = activeTasks(kanban);
   const blockers = collectTaskBlockers(kanban);
   const rules = readMarkdownFiles(projectPath(cwd, "rules"));
+  const executionState = readExecutionState(cwd);
+  const activeSlice = getActiveSlice(executionState);
   const memoryIndex = readJsonFile(projectPath(cwd, "state", "memory-index.json"), undefined);
   let mcp = { servers: {} };
   let mcpError;
@@ -51,12 +79,23 @@ export async function buildContextPack({ cwd, prompt = "" } = {}) {
   const enabledMcp = Object.entries(mcp.servers ?? {}).filter(([, server]) => server.enabled !== false);
   const uiEvidenceRequired = isUiPrompt(prompt) || enabledMcp.some(([name]) => name === "playwright");
 
-  const content = [
+  const rawContent = [
     "# aihaus-pi context pack",
     "",
     `Gateway: ${gateway}`,
     `Prompt fact source: explicit user input for this turn`,
     `Context status: ${existsSync(projectPath(cwd)) ? "baseline-present" : "baseline-missing"}`,
+    "",
+    section(
+      "Execution cursor",
+      activeSlice
+        ? [
+            `Active slice: ${activeSlice.id} - ${activeSlice.title}`,
+            `Cursor: ${(executionState.cursor?.activeIndex ?? 0) + 1}/${executionState.slices?.length ?? 1}`,
+            "Policy: execute only the active slice; do not claim the full request is complete.",
+          ]
+        : ["no active execution cursor"],
+    ),
     "",
     section(
       "Kanban facts",
@@ -104,6 +143,8 @@ export async function buildContextPack({ cwd, prompt = "" } = {}) {
     "```",
   ].join("\n");
 
+  const { content, budget } = enforceContextBudget(rawContent, maxChars);
+
   return {
     customType: CONTEXT_PACK_INJECTION.customType,
     content,
@@ -113,6 +154,8 @@ export async function buildContextPack({ cwd, prompt = "" } = {}) {
       activeTaskCount: tasks.length,
       mcpServers: Object.keys(mcp.servers ?? {}),
       uiEvidenceRequired,
+      execution: activeSlice ? { activeSliceId: activeSlice.id, activeIndex: executionState.cursor?.activeIndex ?? 0, totalSlices: executionState.slices?.length ?? 0 } : undefined,
+      budget,
     },
   };
 }

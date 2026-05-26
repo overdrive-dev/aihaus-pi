@@ -31,6 +31,11 @@ export const AGENT_CONTEXT_SOURCES = [
     purpose: "Configured MCP providers, tool provenance, Playwright readiness, and external evidence capabilities.",
     piMechanism: "Loaded from aihaus-pi/mcp.json and exposed through aihaus-pi bridge tools after policy checks.",
   },
+  {
+    name: "execution-cursor",
+    purpose: "Active slice, continuation state, and context-budget policy for large multi-task requests.",
+    piMechanism: "Loaded from aihaus-pi/state/execution.json and aihaus-pi/continue.md before agent execution.",
+  },
 ];
 
 export const PI_CONTEXT_MECHANISMS = [
@@ -58,6 +63,7 @@ export const CONTEXT_PACK_INJECTION = {
   maxDefaultSections: [
     "task",
     "gateway",
+    "execution-cursor",
     "business-rules",
     "selected-skills",
     "memory-hits",

@@ -14,6 +14,7 @@ const required = [
   "src/mcp/bridge.js",
   "src/context/pack.js",
   "src/evidence/package.js",
+  "src/execution/slices.js",
   "src/router/gateways.js",
   "src/models/cohorts.js",
   "docs/PRD.md",
@@ -21,8 +22,10 @@ const required = [
   "docs/WORKFLOW.md",
   "docs/MODEL_COHORTS.md",
   "docs/MCP.md",
+  "docs/CONTEXT_MANAGEMENT.md",
   "docs/INIT.md",
   "skills/aih-mcp/SKILL.md",
+  "skills/aih-exec/SKILL.md",
 ];
 
 for (const rel of required) {
