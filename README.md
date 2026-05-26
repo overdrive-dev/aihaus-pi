@@ -30,15 +30,15 @@ Core rules:
 
 Install Pi first, then install this package from GitHub:
 
-```bash
+```powershell
 npm install -g --ignore-scripts @earendil-works/pi-coding-agent
 npm install -g git+https://github.com/overdrive-dev/aihaus-pi.git
 ```
 
 Start aihaus from the repository you want it to work on:
 
-```bash
-cd /path/to/project
+```powershell
+cd C:\path\to\project
 aihaus
 ```
 

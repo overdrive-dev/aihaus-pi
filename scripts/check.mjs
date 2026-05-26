@@ -37,5 +37,8 @@ if (docs.length < 5) throw new Error("expected at least five docs");
 const launcher = readFileSync(join(root, "bin/aihaus.js"), "utf8");
 if (!launcher.includes('"--aihaus-version"')) throw new Error("aihaus launcher missing version probe");
 if (!launcher.includes('"-e"')) throw new Error("aihaus launcher must load this package with pi -e");
+if (!launcher.includes("shell: process.platform === \"win32\"")) {
+  throw new Error("aihaus launcher must use shell mode on Windows for npm .cmd shims");
+}
 
 console.log("aihaus-pi scaffold check passed");

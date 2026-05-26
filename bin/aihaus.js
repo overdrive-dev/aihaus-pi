@@ -19,6 +19,7 @@ const piCommand = process.env.AIHAUS_PI_COMMAND ?? (process.platform === "win32"
 const result = spawnSync(piCommand, ["-e", packageRoot, ...args], {
   stdio: "inherit",
   windowsHide: false,
+  shell: process.platform === "win32",
 });
 
 if (result.error?.code === "ENOENT") {

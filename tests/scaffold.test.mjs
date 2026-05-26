@@ -100,6 +100,7 @@ test("package exposes aihaus launcher without forking Pi", () => {
 
   const launcher = readFileSync(new URL("../bin/aihaus.js", import.meta.url), "utf8");
   assert.match(launcher, /spawnSync\(piCommand, \["-e", packageRoot/);
+  assert.match(launcher, /shell: process\.platform === "win32"/);
   assert.doesNotMatch(launcher.toLowerCase(), /fork/);
 
   const architecture = readFileSync(new URL("../docs/ARCHITECTURE.md", import.meta.url), "utf8");
