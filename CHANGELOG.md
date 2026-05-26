@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 - 2026-05-26
 
 ### Added
 
@@ -12,7 +12,8 @@
 
 ### Verification
 
-- `npm test` passes with 27/27 tests after sliced-execution changes.
+- `npm run smoke` passes with 27/27 tests after sliced-execution changes.
+- `npm pack --dry-run --json` includes sliced-execution runtime, docs, and skill files.
 
 ## 0.1.0 - 2026-05-26
 
